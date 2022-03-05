@@ -95,7 +95,7 @@ public class ImageActivity extends AppCompatActivity {
     private void writeToFile(String recording) {
         try {
             String root = Environment.getExternalStorageDirectory().toString();
-            File myDir = new File(root + "/saved_recordings");
+            File myDir = new File(root + "/CaptureNotes/SavedRecordings");
             myDir.mkdirs();
 
             String fname = "irecord-"+noteTitle.getText()+".txt";

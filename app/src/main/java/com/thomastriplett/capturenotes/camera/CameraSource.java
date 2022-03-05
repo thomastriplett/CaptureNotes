@@ -405,7 +405,6 @@ public class CameraSource {
                 } catch (InterruptedException e) {
                     Log.d(TAG, "Frame processing thread interrupted on release.");
                 }
-                mProcessingThread = null;
             }
 
             // clear the buffer to prevent oom exceptions
