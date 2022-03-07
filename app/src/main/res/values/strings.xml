@@ -15,4 +15,6 @@
     <string name="ocr_error">"Error reading text: %1$s"</string>
     <string name="file_name">Note.json</string>
     <string name="encoding">UTF-8</string>
+    <string name="menu_item_settings" translatable="false">Settings</string>
+    <string name="select_image" translatable="false">Select image</string>
 </resources>
