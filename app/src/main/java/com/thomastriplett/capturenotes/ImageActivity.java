@@ -6,10 +6,9 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +40,7 @@ public class ImageActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG,"In onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image);
 
@@ -51,11 +51,15 @@ public class ImageActivity extends AppCompatActivity {
         newButton = (ImageView) findViewById(R.id.new_button);
         saveButton = findViewById(R.id.save_button);
 
+        Intent intent = getIntent();
+        recordText.setText(intent.getStringExtra("text"));
+        Log.d(TAG,"String Extra = "+intent.getStringExtra("text"));
+
         newButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(ImageActivity.this, OcrCaptureActivity.class);
+                Intent intent = new Intent(ImageActivity.this, StillImageActivity.class);
                 startActivityForResult(intent, RC_OCR_CAPTURE);
             }
         });
@@ -70,11 +74,18 @@ public class ImageActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        Intent mainIntent = new Intent(ImageActivity.this, MainActivity.class);
+        startActivity(mainIntent);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG,"requestCode="+requestCode+" resultCode="+resultCode);
         if(requestCode == RC_OCR_CAPTURE) {
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
-                    String text = data.getStringExtra(OcrCaptureActivity.TextBlockObject);
+                    String text = data.getStringExtra(StillImageActivity.TextBlockObject);
                     Log.d(TAG,"Text Read Successfully");
 
                     Random rand = new Random();
