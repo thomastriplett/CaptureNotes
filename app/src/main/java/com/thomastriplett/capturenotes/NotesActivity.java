@@ -29,6 +29,7 @@ public class NotesActivity extends AppCompatActivity {
     ArrayAdapter adapter;
     String username;
     ArrayList<String> displayNotes;
+    private final String TAG = "In NotesActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +49,7 @@ public class NotesActivity extends AppCompatActivity {
 
         displayNotes = new ArrayList<>();
         for (Note note : notes) {
+            Log.d(TAG,"Title: "+note.getTitle());
             displayNotes.add(String.format("Title:%s\nDate:%s", note.getTitle(), note.getDate()));
         }
 
