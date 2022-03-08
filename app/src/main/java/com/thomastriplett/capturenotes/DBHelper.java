@@ -1,10 +1,14 @@
 package com.thomastriplett.capturenotes;
 
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL;
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
 import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -59,12 +63,10 @@ public class DBHelper {
         sqLiteDatabase.insertWithOnConflict("notes", null, values, CONFLICT_REPLACE);
     }
 
-    public void updateNote(String username, String date, String title, String content) {
+    public void updateNote(String username, String date, String title, String content, String originalTitle) {
         createTable();
-//        sqLiteDatabase.execSQL(String.format("UPDATE notes set content = '%s', date = '%s' where title = '%s' AND username = '%s'",
-//                content, date, title, username));
         ContentValues values = new ContentValues();
-        String[] whereArgs = {title,username};
+        String[] whereArgs = {originalTitle,username};
         values.put("username", username);
         values.put("date", date);
         values.put("title", title);

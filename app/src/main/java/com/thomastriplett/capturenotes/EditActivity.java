@@ -19,12 +19,14 @@ public class EditActivity extends AppCompatActivity {
     int noteid = -1;
     DBHelper dbHelper;
     SQLiteDatabase sqLiteDatabase;
+    String originalTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
         EditText editText = findViewById(R.id.editText);
+        EditText editTitle = findViewById(R.id.editTitle);
 
         Intent intent = getIntent();
         noteid = intent.getIntExtra("noteid",-1);
@@ -33,14 +35,17 @@ public class EditActivity extends AppCompatActivity {
 
         if(noteid != -1) {
             Note note = NotesActivity.notes.get(noteid);
-            String noteContent = note.getContent();
-            editText.setText(noteContent);
+            editText.setText(note.getContent());
+            editTitle.setText(note.getTitle());
+            originalTitle = note.getTitle();
         }
     }
 
     public void onClick(View v) {
         EditText editText = findViewById(R.id.editText);
+        EditText editTitle = findViewById(R.id.editTitle);
         String content = editText.getText().toString();
+        String title = editTitle.getText().toString();
 
         Context context = getApplicationContext();
         sqLiteDatabase = context.openOrCreateDatabase("notes",
@@ -50,16 +55,13 @@ public class EditActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
         String username = sharedPreferences.getString("username","");
 
-        String title;
         DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
         String date = dateFormat.format(new Date());
 
         if (noteid == -1) {
-            title = "NOTE_" + (NotesActivity.notes.size() + 1);
             dbHelper.saveNotes(username, title, content, date);
         } else {
-            title = "NOTE_" + (noteid +1);
-            dbHelper.updateNote(username, date, title, content);
+            dbHelper.updateNote(username, date, title, content, originalTitle);
         }
 
         Intent intent = new Intent(EditActivity.this, NotesActivity.class);
