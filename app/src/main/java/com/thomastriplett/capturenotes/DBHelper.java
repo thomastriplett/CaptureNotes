@@ -72,4 +72,10 @@ public class DBHelper {
         sqLiteDatabase.updateWithOnConflict("notes", values,
                 "title = ? AND username = ?", whereArgs, CONFLICT_REPLACE);
     }
+
+    public void deleteNote(String username, String title) {
+        createTable();
+        String[] whereArgs = {title,username};
+        sqLiteDatabase.delete("notes", "title = ? AND username = ?", whereArgs);
+    }
 }
