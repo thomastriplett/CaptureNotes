@@ -8,6 +8,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,6 +23,12 @@ import java.util.ArrayList;
 public class NotesActivity extends AppCompatActivity {
 
     public static ArrayList<Note> notes = new ArrayList<>();
+    DBHelper dbHelper;
+    SQLiteDatabase sqLiteDatabase;
+    Context context;
+    ArrayAdapter adapter;
+    String username;
+    ArrayList<String> displayNotes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,26 +36,28 @@ public class NotesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_notes);
         TextView myTextView = findViewById(R.id.myTextView);
         SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
-        String username = sharedPreferences.getString("username","");
-        myTextView.setText("Welcome "+username+"!");
+        username = sharedPreferences.getString("username","");
+        myTextView.setText("Captured Notes");
 
-        Context context = getApplicationContext();
-        SQLiteDatabase sqLiteDatabase = context.openOrCreateDatabase("notes",
+        context = getApplicationContext();
+        sqLiteDatabase = context.openOrCreateDatabase("notes",
                 Context.MODE_PRIVATE,null);
-        DBHelper dbHelper = new DBHelper(sqLiteDatabase);
+        dbHelper = new DBHelper(sqLiteDatabase);
 
         notes = dbHelper.readNotes(username);
 
-        ArrayList<String> displayNotes = new ArrayList<>();
+        displayNotes = new ArrayList<>();
         for (Note note : notes) {
             displayNotes.add(String.format("Title:%s\nDate:%s", note.getTitle(), note.getDate()));
         }
 
         Log.i("Info","Number of notes = "+notes.size());
 
-        ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1,displayNotes);
+        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1,displayNotes);
         ListView listView = (ListView) findViewById(R.id.list_view);
         listView.setAdapter(adapter);
+
+        registerForContextMenu(listView);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -75,6 +84,44 @@ public class NotesActivity extends AppCompatActivity {
                 startActivity(intent2);
                 return true;
             default: return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if (v.getId()==R.id.list_view) {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.context_menu, menu);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch(item.getItemId()) {
+            case R.id.deleteItem:
+                int position = info.position;
+                Note noteToDelete = notes.get(position);
+                sqLiteDatabase = context.openOrCreateDatabase("notes",
+                        Context.MODE_PRIVATE,null);
+                dbHelper = new DBHelper(sqLiteDatabase);
+                dbHelper.deleteNote(username,noteToDelete.getTitle());
+                notes.remove(position);
+                displayNotes = new ArrayList<>();
+                for (Note note : notes) {
+                    displayNotes.add(String.format("Title:%s\nDate:%s", note.getTitle(), note.getDate()));
+                }
+                adapter.clear();
+                if (displayNotes != null){
+                    for (String note : displayNotes) {
+                        adapter.insert(note, adapter.getCount());
+                    }
+                }
+                adapter.notifyDataSetChanged();
+                return true;
+            default:
+                return super.onContextItemSelected(item);
         }
     }
 }
