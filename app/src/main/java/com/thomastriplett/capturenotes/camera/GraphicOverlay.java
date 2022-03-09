@@ -51,6 +51,7 @@ public class GraphicOverlay extends View {
   private final List<Graphic> graphics = new ArrayList<>();
   // Matrix for transforming from image coordinates to overlay view coordinates.
   private final Matrix transformationMatrix = new Matrix();
+  protected String resultString = "";
 
   private int imageWidth;
   private int imageHeight;
@@ -156,6 +157,20 @@ public class GraphicOverlay extends View {
   public void add(Graphic graphic) {
     synchronized (lock) {
       graphics.add(graphic);
+    }
+  }
+
+  /** Adds a graphic to the overlay. */
+  public void addText(String string) {
+    synchronized (lock) {
+      resultString = string;
+    }
+  }
+
+  /** Adds a graphic to the overlay. */
+  public String getText() {
+    synchronized (lock) {
+     return resultString;
     }
   }
 

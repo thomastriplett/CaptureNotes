@@ -18,14 +18,18 @@ package com.thomastriplett.capturenotes.textdetector;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.media.Image;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.tasks.Task;
+import com.google.android.odml.image.BitmapMlImageBuilder;
+import com.google.android.odml.image.MlImage;
 import com.google.mlkit.vision.common.InputImage;
 import com.thomastriplett.capturenotes.ImageActivity;
 import com.thomastriplett.capturenotes.StillImageActivity;
@@ -77,9 +81,10 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
   protected void onSuccess(@NonNull Text text, @NonNull GraphicOverlay graphicOverlay) {
     Log.d(TAG, "On-device Text detection successful");
     logExtrasForTesting(text);
-    graphicOverlay.add(
-        new TextGraphic(graphicOverlay, text, shouldGroupRecognizedTextInBlocks, showLanguageTag));
-    Intent data = new Intent(context,ImageActivity.class);
+//    graphicOverlay.addText(text.getText());
+//    graphicOverlay.add(
+//        new TextGraphic(graphicOverlay, text, shouldGroupRecognizedTextInBlocks, showLanguageTag));
+    Intent data = new Intent(context,StillImageActivity.class);
     data.putExtra("text", text.getText());
     context.startActivity(data);
   }

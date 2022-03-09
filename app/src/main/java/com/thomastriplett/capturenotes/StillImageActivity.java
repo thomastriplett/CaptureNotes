@@ -19,23 +19,24 @@ package com.thomastriplett.capturenotes;
 import static java.lang.Math.max;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
-import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -64,9 +65,12 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /** Activity demonstrating different image detector features with a still image from camera. */
 @KeepName
@@ -112,7 +116,15 @@ public final class StillImageActivity extends AppCompatActivity {
   private Uri imageUri;
   private int imageMaxWidth;
   private int imageMaxHeight;
-  private VisionImageProcessor imageProcessor;
+  private TextRecognitionProcessor imageProcessor;
+
+  private TextView recordText;
+  private TextView noteTitle;
+
+//  protected String resultText;
+
+  DBHelper dbHelper;
+  SQLiteDatabase sqLiteDatabase;
 
   public static final String TextBlockObject = "String";
 
@@ -122,32 +134,61 @@ public final class StillImageActivity extends AppCompatActivity {
 
     setContentView(R.layout.activity_still_image);
 
-    findViewById(R.id.select_image_button)
-        .setOnClickListener(
-            view -> {
-              // Menu for selecting either: a) take new photo b) select from existing
-              PopupMenu popup = new PopupMenu(StillImageActivity.this, view);
-              popup.setOnMenuItemClickListener(
-                  menuItem -> {
-                    int itemId = menuItem.getItemId();
-                    if (itemId == R.id.select_images_from_local) {
-                      startChooseImageIntentForResult();
-                      return true;
-                    } else if (itemId == R.id.take_photo_using_camera) {
+    recordText = (TextView) findViewById(R.id.record_text2);
+    noteTitle = findViewById(R.id.note_title2);
+
+    Intent intent = getIntent();
+    recordText.setText(intent.getStringExtra("text"));
+    Log.d(TAG,"String Extra = "+intent.getStringExtra("text"));
+
+    findViewById(R.id.camera_button)
+            .setOnClickListener(
+                    view -> {
                       startCameraIntentForResult();
-                      return true;
-                    }
-                    return false;
-                  });
-              MenuInflater inflater = popup.getMenuInflater();
-              inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
-              popup.show();
-            });
-    preview = findViewById(R.id.preview);
+                    });
+
+    findViewById(R.id.gallery_button)
+            .setOnClickListener(
+                    view -> {
+                      startChooseImageIntentForResult();
+                    });
+
+    findViewById(R.id.save_button2)
+            .setOnClickListener(
+                    view -> {
+                      writeToFile(recordText.getText().toString());
+                      saveNote(recordText.getText().toString());
+                    });
+
+//    findViewById(R.id.select_image_button)
+//        .setOnClickListener(
+//            view -> {
+//              // Menu for selecting either: a) take new photo b) select from existing
+//              PopupMenu popup = new PopupMenu(StillImageActivity.this, view);
+//              popup.setOnMenuItemClickListener(
+//                  menuItem -> {
+//                    int itemId = menuItem.getItemId();
+//                    if (itemId == R.id.select_images_from_local) {
+//                      startChooseImageIntentForResult();
+//                      return true;
+//                    } else if (itemId == R.id.take_photo_using_camera) {
+//                      startCameraIntentForResult();
+//                      return true;
+//                    }
+//                    return false;
+//                  });
+//              MenuInflater inflater = popup.getMenuInflater();
+//              inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
+//              popup.show();
+//            });
+//    preview = findViewById(R.id.preview);
     graphicOverlay = findViewById(R.id.graphic_overlay);
 
-    populateFeatureSelector();
-    populateSizeSelector();
+//    populateFeatureSelector();
+//    populateSizeSelector();
+    selectedMode = TEXT_RECOGNITION_LATIN;
+    createImageProcessor();
+    tryReloadAndDetectInImage();
 
     isLandScape =
         (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
@@ -166,21 +207,12 @@ public final class StillImageActivity extends AppCompatActivity {
               public void onGlobalLayout() {
                 rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 imageMaxWidth = rootView.getWidth();
-                imageMaxHeight = rootView.getHeight() - findViewById(R.id.control).getHeight();
+                imageMaxHeight = rootView.getHeight();
                 if (SIZE_SCREEN.equals(selectedSize)) {
                   tryReloadAndDetectInImage();
                 }
               }
             });
-
-    ImageView settingsButton = findViewById(R.id.settings_button);
-//    settingsButton.setOnClickListener(
-//        v -> {
-//          Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
-//          intent.putExtra(
-//              SettingsActivity.EXTRA_LAUNCH_SOURCE, SettingsActivity.LaunchSource.STILL_IMAGE);
-//          startActivity(intent);
-//        });
   }
 
   @Override
@@ -207,61 +239,61 @@ public final class StillImageActivity extends AppCompatActivity {
     }
   }
 
-  private void populateFeatureSelector() {
-    Spinner featureSpinner = findViewById(R.id.feature_selector);
-    List<String> options = new ArrayList<>();
-    options.add(TEXT_RECOGNITION_LATIN);
+//  private void populateFeatureSelector() {
+//    Spinner featureSpinner = findViewById(R.id.feature_selector);
+//    List<String> options = new ArrayList<>();
+//    options.add(TEXT_RECOGNITION_LATIN);
+//
+//    // Creating adapter for featureSpinner
+//    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
+//    // Drop down layout style - list view with radio button
+//    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//    // attaching data adapter to spinner
+//    featureSpinner.setAdapter(dataAdapter);
+//    featureSpinner.setOnItemSelectedListener(
+//        new OnItemSelectedListener() {
+//
+//          @Override
+//          public void onItemSelected(
+//              AdapterView<?> parentView, View selectedItemView, int pos, long id) {
+//            selectedMode = parentView.getItemAtPosition(pos).toString();
+//            createImageProcessor();
+//            tryReloadAndDetectInImage();
+//          }
+//
+//          @Override
+//          public void onNothingSelected(AdapterView<?> arg0) {}
+//        });
+//  }
 
-    // Creating adapter for featureSpinner
-    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
-    // Drop down layout style - list view with radio button
-    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // attaching data adapter to spinner
-    featureSpinner.setAdapter(dataAdapter);
-    featureSpinner.setOnItemSelectedListener(
-        new OnItemSelectedListener() {
-
-          @Override
-          public void onItemSelected(
-              AdapterView<?> parentView, View selectedItemView, int pos, long id) {
-            selectedMode = parentView.getItemAtPosition(pos).toString();
-            createImageProcessor();
-            tryReloadAndDetectInImage();
-          }
-
-          @Override
-          public void onNothingSelected(AdapterView<?> arg0) {}
-        });
-  }
-
-  private void populateSizeSelector() {
-    Spinner sizeSpinner = findViewById(R.id.size_selector);
-    List<String> options = new ArrayList<>();
-    options.add(SIZE_SCREEN);
-    options.add(SIZE_1024_768);
-    options.add(SIZE_640_480);
-    options.add(SIZE_ORIGINAL);
-
-    // Creating adapter for featureSpinner
-    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
-    // Drop down layout style - list view with radio button
-    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // attaching data adapter to spinner
-    sizeSpinner.setAdapter(dataAdapter);
-    sizeSpinner.setOnItemSelectedListener(
-        new OnItemSelectedListener() {
-
-          @Override
-          public void onItemSelected(
-              AdapterView<?> parentView, View selectedItemView, int pos, long id) {
-            selectedSize = parentView.getItemAtPosition(pos).toString();
-            tryReloadAndDetectInImage();
-          }
-
-          @Override
-          public void onNothingSelected(AdapterView<?> arg0) {}
-        });
-  }
+//  private void populateSizeSelector() {
+//    Spinner sizeSpinner = findViewById(R.id.size_selector);
+//    List<String> options = new ArrayList<>();
+//    options.add(SIZE_SCREEN);
+//    options.add(SIZE_1024_768);
+//    options.add(SIZE_640_480);
+//    options.add(SIZE_ORIGINAL);
+//
+//    // Creating adapter for featureSpinner
+//    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
+//    // Drop down layout style - list view with radio button
+//    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//    // attaching data adapter to spinner
+//    sizeSpinner.setAdapter(dataAdapter);
+//    sizeSpinner.setOnItemSelectedListener(
+//        new OnItemSelectedListener() {
+//
+//          @Override
+//          public void onItemSelected(
+//              AdapterView<?> parentView, View selectedItemView, int pos, long id) {
+//            selectedSize = parentView.getItemAtPosition(pos).toString();
+//            tryReloadAndDetectInImage();
+//          }
+//
+//          @Override
+//          public void onNothingSelected(AdapterView<?> arg0) {}
+//        });
+//  }
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
@@ -273,7 +305,7 @@ public final class StillImageActivity extends AppCompatActivity {
   private void startCameraIntentForResult() {
     // Clean up last time's image
     imageUri = null;
-    preview.setImageBitmap(null);
+//    preview.setImageBitmap(null);
 
     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
     if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -347,7 +379,7 @@ public final class StillImageActivity extends AppCompatActivity {
                 true);
       }
 
-      preview.setImageBitmap(resizedBitmap);
+//      preview.setImageBitmap(resizedBitmap);
 
       if (imageProcessor != null) {
         graphicOverlay.setImageSourceInfo(
@@ -410,5 +442,54 @@ public final class StillImageActivity extends AppCompatActivity {
               Toast.LENGTH_LONG)
           .show();
     }
+  }
+
+  private void writeToFile(String recording) {
+    try {
+      String root = Environment.getExternalStorageDirectory().toString();
+      File myDir = new File(root + "/CaptureNotes/SavedRecordings");
+      myDir.mkdirs();
+
+      String fname = "irecord-"+noteTitle.getText()+".txt";
+
+      File file = new File (myDir, fname);
+
+      FileOutputStream fos = new FileOutputStream(file);
+
+      fos.write(noteTitle.getText().toString().getBytes());
+      fos.write(System.getProperty("line.separator").getBytes());
+      fos.write(System.getProperty("line.separator").getBytes());
+      SimpleDateFormat sd = new SimpleDateFormat("MM/dd/yy hh:mm a");
+      Date newDate = new Date();
+      String date = sd.format(newDate);
+      fos.write(date.getBytes());
+      fos.write(System.getProperty("line.separator").getBytes());
+      fos.write(System.getProperty("line.separator").getBytes());
+      fos.write(recording.getBytes());
+      fos.close();
+      Toast.makeText(StillImageActivity.this, "Note Saved to File", Toast.LENGTH_SHORT).show();
+    }
+    catch (IOException e) {
+      Toast.makeText(StillImageActivity.this, "Note Not Saved, Try Changing the Title", Toast.LENGTH_SHORT).show();
+      Log.e("Exception", "File write failed: " + e.toString());
+    }
+  }
+
+  private void saveNote(String recording) {
+
+    Context context = getApplicationContext();
+    sqLiteDatabase = context.openOrCreateDatabase("notes",
+            Context.MODE_PRIVATE,null);
+    dbHelper = new DBHelper(sqLiteDatabase);
+
+    SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
+    String username = sharedPreferences.getString("username","");
+
+    String title = noteTitle.getText().toString();
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    String date = dateFormat.format(new Date());
+
+    dbHelper.saveNotes(username, title, recording, date);
+    Toast.makeText(StillImageActivity.this, "Note Saved to DB", Toast.LENGTH_SHORT).show();
   }
 }
