@@ -33,48 +33,51 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.annotation.KeepName;
-//import com.google.mlkit.common.model.LocalModel;
-//import com.google.mlkit.vision.demo.GraphicOverlay;
-//import com.google.mlkit.vision.demo.java.barcodescanner.BarcodeScannerProcessor;
-//import com.google.mlkit.vision.demo.java.facedetector.FaceDetectorProcessor;
-//import com.google.mlkit.vision.demo.java.labeldetector.LabelDetectorProcessor;
-//import com.google.mlkit.vision.demo.java.objectdetector.ObjectDetectorProcessor;
-//import com.google.mlkit.vision.demo.java.posedetector.PoseDetectorProcessor;
-//import com.google.mlkit.vision.demo.java.segmenter.SegmenterProcessor;
-//import com.google.mlkit.vision.demo.java.textdetector.TextRecognitionProcessor;
-//import com.google.mlkit.vision.demo.preference.SettingsActivity;
-//import com.google.mlkit.vision.label.custom.CustomImageLabelerOptions;
-//import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
-//import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions;
-//import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
-//import com.google.mlkit.vision.pose.PoseDetectorOptionsBase;
-//import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
-//import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
-//import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
-//import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.docs.v1.Docs;
+import com.google.api.services.docs.v1.DocsScopes;
+import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
+import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
+import com.google.api.services.docs.v1.model.Document;
+import com.google.api.services.docs.v1.model.InsertTextRequest;
+import com.google.api.services.docs.v1.model.Location;
+import com.google.api.services.docs.v1.model.Request;
+import com.google.api.services.drive.DriveScopes;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /** Activity demonstrating different image detector features with a still image from camera. */
 @KeepName
 public final class ImageActivity extends AppCompatActivity {
 
-  private static final String TAG = "StillImageActivity";
+  private static final String TAG = "ImageActivity";
 
   private static final String OBJECT_DETECTION = "Object Detection";
 
@@ -108,7 +111,10 @@ public final class ImageActivity extends AppCompatActivity {
   DBHelper dbHelper;
   SQLiteDatabase sqLiteDatabase;
 
-  public static final String TextBlockObject = "String";
+  /** Application name. */
+  private static final String APPLICATION_NAME = "CaptureNotes";
+  /** Global instance of the JSON factory. */
+  private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -138,7 +144,7 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.image_save_button)
             .setOnClickListener(
                     view -> {
-                      writeToFile(recordText.getText().toString());
+                      requestSignIn();
                       saveNote(recordText.getText().toString());
                     });
 
@@ -171,6 +177,17 @@ public final class ImageActivity extends AppCompatActivity {
                 }
               }
             });
+  }
+
+  private void requestSignIn() {
+    GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
+            .build();
+
+    GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
+
+    startActivityForResult(client.getSignInIntent(),400);
   }
 
   @Override
@@ -213,7 +230,6 @@ public final class ImageActivity extends AppCompatActivity {
   private void startCameraIntentForResult() {
     // Clean up last time's image
     imageUri = null;
-//    preview.setImageBitmap(null);
 
     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
     if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -241,9 +257,32 @@ public final class ImageActivity extends AppCompatActivity {
       // In this case, imageUri is returned by the chooser, save it.
       imageUri = data.getData();
       tryReloadAndDetectInImage();
+    } else if (requestCode == 400 && resultCode == RESULT_OK) {
+      handleSignInIntent(data);
+
     } else {
       super.onActivityResult(requestCode, resultCode, data);
     }
+  }
+
+  private void handleSignInIntent(Intent data) {
+    GoogleSignIn.getSignedInAccountFromIntent(data)
+            .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
+              @Override
+              public void onSuccess(GoogleSignInAccount googleSignInAccount) {
+                GoogleAccountCredential credential = GoogleAccountCredential
+                        .usingOAuth2(ImageActivity.this,Collections.singleton(DocsScopes.DRIVE_FILE));
+
+                credential.setSelectedAccount(googleSignInAccount.getAccount());
+                onCredentialReceived(credential);
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+
+              }
+            });
   }
 
   private void tryReloadAndDetectInImage() {
@@ -397,5 +436,73 @@ public final class ImageActivity extends AppCompatActivity {
 
     dbHelper.saveNotes(username, title, recording, date);
     Toast.makeText(ImageActivity.this, "Note Saved to DB", Toast.LENGTH_SHORT).show();
+  }
+
+  private void onCredentialReceived(GoogleAccountCredential credential){
+    try{
+      final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+
+      Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+              .setApplicationName(APPLICATION_NAME)
+              .build();
+
+      Document doc = new Document()
+              .setTitle(noteTitle.getText().toString());
+
+      CreateDocTaskParams params = new CreateDocTaskParams(doc, service);
+      new CreateDocTask(ImageActivity.this).execute(params);
+
+    } catch(IOException e) {
+      Toast.makeText(ImageActivity.this, "Note Not Uploaded", Toast.LENGTH_SHORT).show();
+      Log.e("Exception", "File upload failed: " + e.toString());
+    }
+    catch(GeneralSecurityException e) {
+      Toast.makeText(ImageActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
+      Log.e("Exception", "File upload failed: " + e.toString());
+    }
+  }
+
+  protected static class CreateDocTaskParams {
+    Document doc;
+    Docs service;
+
+    CreateDocTaskParams(Document doc, Docs service) {
+      this.doc = doc;
+      this.service = service;
+    }
+  }
+
+  protected static class UpdateDocTaskParams {
+    Docs service;
+    String docId;
+    BatchUpdateDocumentRequest body;
+
+    UpdateDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body) {
+      this.service = service;
+      this.docId = docId;
+      this.body = body;
+    }
+  }
+
+  public void whenCreateDocTaskIsDone(CreateDocTaskParams params) {
+    Document doc = params.doc;
+    Docs service = params.service;
+    Log.d(TAG,"Created document with title: " + doc.getTitle());
+    String docId = doc.getDocumentId();
+    Log.d(TAG,"Document ID: " + docId);
+
+    List<Request> requests = new ArrayList<>();
+    requests.add(new Request().setInsertText(new InsertTextRequest()
+            .setText(recordText.getText().toString())
+            .setLocation(new Location().setIndex(1))));
+
+
+    BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
+    UpdateDocTaskParams updateParams = new UpdateDocTaskParams(service,docId,body);
+    new UpdateDocTask(this).execute(updateParams);
+  }
+
+  public void whenUpdateDocTaskIsDone(BatchUpdateDocumentResponse result) {
+    Toast.makeText(ImageActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show();
   }
 }
