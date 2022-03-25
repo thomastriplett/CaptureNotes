@@ -17,4 +17,5 @@
     <string name="encoding">UTF-8</string>
     <string name="menu_item_settings" translatable="false">Settings</string>
     <string name="select_image" translatable="false">Select image</string>
+    <string name="web_client_id">772615309029-raispv703prdrfenafhoogdfkbatrhe9.apps.googleusercontent.com</string>
 </resources>
