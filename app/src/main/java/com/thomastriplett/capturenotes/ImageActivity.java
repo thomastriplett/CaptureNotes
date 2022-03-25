@@ -31,8 +31,14 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
+import android.view.ContextMenu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -141,11 +147,13 @@ public final class ImageActivity extends AppCompatActivity {
                       startChooseImageIntentForResult();
                     });
 
+    ImageView saveButton = (ImageView) findViewById(R.id.image_save_button);
+    registerForContextMenu(saveButton);
+
     findViewById(R.id.image_save_button)
             .setOnClickListener(
                     view -> {
-                      requestSignIn();
-                      saveNote(recordText.getText().toString());
+                      view.showContextMenu();
                     });
 
     graphicOverlay = findViewById(R.id.graphic_overlay);
@@ -177,6 +185,33 @@ public final class ImageActivity extends AppCompatActivity {
                 }
               }
             });
+  }
+
+  @Override
+  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+    super.onCreateContextMenu(menu, v, menuInfo);
+    if (v.getId()==R.id.image_save_button) {
+      MenuInflater inflater = getMenuInflater();
+      inflater.inflate(R.menu.save_button_context_menu, menu);
+    }
+  }
+
+  @Override
+  public boolean onContextItemSelected(MenuItem item) {
+    AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+    switch(item.getItemId()) {
+      case R.id.saveToGoogleDocItem:
+        requestSignIn();
+        return true;
+      case R.id.saveToFileItem:
+        writeToFile(recordText.getText().toString());
+        return true;
+      case R.id.saveInAppItem:
+        saveNote(recordText.getText().toString());
+        return true;
+      default:
+        return super.onContextItemSelected(item);
+    }
   }
 
   private void requestSignIn() {
