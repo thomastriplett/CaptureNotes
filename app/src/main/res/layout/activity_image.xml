@@ -49,45 +49,43 @@
       android:id="@+id/image_save_button"
       android:layout_width="0dp"
       android:layout_height="0dp"
-      android:layout_marginTop="8dp"
       android:background="@color/saveColor"
       app:layout_constraintBottom_toTopOf="@+id/guideline11"
       app:layout_constraintEnd_toEndOf="parent"
       app:layout_constraintStart_toStartOf="@+id/guideline10"
       app:layout_constraintTop_toBottomOf="@+id/image_instr"
-      app:srcCompat="@drawable/floppy2" />
+      app:srcCompat="@drawable/save_icon" />
 
   <TextView
       android:id="@+id/image_instr"
       android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_marginStart="8dp"
-      android:layout_marginTop="8dp"
-      android:layout_marginEnd="8dp"
-      android:fontFamily="serif"
-      android:text="Use CaptureNotes on a Picture"
+      android:layout_height="0dp"
+      android:background="@color/colorPrimary"
+      android:fontFamily="casual"
+      android:gravity="center"
+      android:text="Capture notes in a new picture"
       android:textAlignment="center"
       android:textColor="@android:color/black"
-      android:textSize="20sp"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintEnd_toEndOf="parent"
+      android:textSize="18sp"
+      android:textStyle="bold"
+      app:layout_constraintBottom_toTopOf="@+id/guideline6"
+      app:layout_constraintEnd_toStartOf="@+id/guideline12"
       app:layout_constraintHorizontal_bias="0.0"
       app:layout_constraintLeft_toLeftOf="parent"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent"
-      app:layout_constraintVertical_bias="0.016" />
+      app:layout_constraintVertical_bias="0.0" />
 
   <ImageView
       android:id="@+id/camera_button"
       android:layout_width="0dp"
       android:layout_height="0dp"
-      android:layout_marginTop="8dp"
       android:background="@color/cameraColor"
       app:layout_constraintBottom_toTopOf="@+id/guideline11"
       app:layout_constraintEnd_toStartOf="@+id/guideline12"
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toBottomOf="@+id/image_instr"
-      app:srcCompat="@drawable/camera" />
+      app:srcCompat="@drawable/camera_icon" />
 
   <ImageView
       android:id="@+id/preview"
@@ -119,25 +117,65 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:orientation="horizontal"
-      app:layout_constraintGuide_begin="114dp" />
+      app:layout_constraintGuide_begin="168dp" />
 
-  <ImageButton
+  <ImageView
       android:id="@+id/gallery_button"
       android:layout_width="0dp"
       android:layout_height="0dp"
-      android:layout_marginTop="8dp"
+      android:background="#979C27B0"
       android:contentDescription="Gallery Button"
       app:layout_constraintBottom_toTopOf="@+id/guideline11"
       app:layout_constraintEnd_toStartOf="@+id/image_save_button"
       app:layout_constraintStart_toStartOf="@+id/guideline12"
-      app:layout_constraintTop_toBottomOf="@+id/image_instr"
-      app:srcCompat="@android:drawable/ic_menu_gallery" />
+      app:layout_constraintTop_toBottomOf="@+id/gallery_instr"
+      app:srcCompat="@drawable/gallery_icon" />
 
   <androidx.constraintlayout.widget.Guideline
       android:id="@+id/guideline13"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:orientation="horizontal"
-      app:layout_constraintGuide_begin="175dp" />
+      app:layout_constraintGuide_begin="240dp" />
+
+  <TextView
+      android:id="@+id/gallery_instr"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:background="@color/colorPrimary"
+      android:fontFamily="casual"
+      android:gravity="center"
+      android:text="Capture notes in an existing picture"
+      android:textAlignment="center"
+      android:textColor="@android:color/black"
+      android:textSize="18sp"
+      android:textStyle="bold"
+      app:layout_constraintBottom_toTopOf="@+id/guideline6"
+      app:layout_constraintEnd_toStartOf="@+id/guideline10"
+      app:layout_constraintStart_toStartOf="@+id/guideline12"
+      app:layout_constraintTop_toTopOf="parent" />
+
+  <androidx.constraintlayout.widget.Guideline
+      android:id="@+id/guideline6"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      app:layout_constraintGuide_begin="84dp" />
+
+  <TextView
+      android:id="@+id/save_button_instr"
+      android:layout_width="0dp"
+      android:layout_height="0dp"
+      android:background="@color/colorPrimary"
+      android:fontFamily="casual"
+      android:gravity="center"
+      android:text="Save note"
+      android:textColor="@android:color/black"
+      android:textSize="18sp"
+      android:textStyle="bold"
+      app:layout_constraintBottom_toTopOf="@+id/guideline6"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toEndOf="@+id/gallery_instr"
+      app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
