@@ -46,17 +46,19 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
   private final TextRecognizer textRecognizer;
   private final Boolean shouldGroupRecognizedTextInBlocks;
   private final Boolean showLanguageTag;
+  private ImageActivity imageActivity;
 
   Context context;
   private static final int RC_OCR_CAPTURE = 9003;
 
   public TextRecognitionProcessor(
-      Context context, TextRecognizerOptionsInterface textRecognizerOptions) {
+      Context context, TextRecognizerOptionsInterface textRecognizerOptions, ImageActivity ia) {
     super(context);
     shouldGroupRecognizedTextInBlocks = true;
     showLanguageTag = false;
     textRecognizer = TextRecognition.getClient(textRecognizerOptions);
     this.context = context;
+    this.imageActivity = ia;
   }
 
   @Override
@@ -74,12 +76,7 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
   protected void onSuccess(@NonNull Text text, @NonNull GraphicOverlay graphicOverlay) {
     Log.d(TAG, "On-device Text detection successful");
     logExtrasForTesting(text);
-//    graphicOverlay.addText(text.getText());
-//    graphicOverlay.add(
-//        new TextGraphic(graphicOverlay, text, shouldGroupRecognizedTextInBlocks, showLanguageTag));
-    Intent data = new Intent(context, ImageActivity.class);
-    data.putExtra("text", text.getText());
-    context.startActivity(data);
+    imageActivity.whenTextRecognitionTaskIsDone(text);
   }
 
   private static void logExtrasForTesting(Text text) {

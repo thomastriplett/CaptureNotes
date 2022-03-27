@@ -72,6 +72,7 @@ import com.google.api.services.docs.v1.model.InsertTextRequest;
 import com.google.api.services.docs.v1.model.Location;
 import com.google.api.services.docs.v1.model.Request;
 import com.google.api.services.drive.DriveScopes;
+import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
@@ -141,10 +142,6 @@ public final class ImageActivity extends AppCompatActivity {
 
     recordText = (TextView) findViewById(R.id.image_record_text);
     noteTitle = findViewById(R.id.image_note_title);
-
-    Intent intent = getIntent();
-    recordText.setText(intent.getStringExtra("text"));
-    Log.d(TAG,"String Extra = "+intent.getStringExtra("text"));
 
     findViewById(R.id.camera_button)
             .setOnClickListener(
@@ -448,7 +445,7 @@ public final class ImageActivity extends AppCompatActivity {
             imageProcessor.stop();
           }
           imageProcessor =
-              new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build());
+              new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), ImageActivity.this);
           break;
         default:
           Log.e(TAG, "Unknown selectedMode: " + selectedMode);
@@ -547,5 +544,21 @@ public final class ImageActivity extends AppCompatActivity {
 
   public void whenUpdateDocTaskIsDone(BatchUpdateDocumentResponse result) {
     Toast.makeText(ImageActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show();
+  }
+
+  public void whenTextRecognitionTaskIsDone(Text text) {
+    List<Text.TextBlock> textBlocks = text.getTextBlocks();
+    Log.d(TAG, "There are "+textBlocks.size()+" TextBlocks");
+    String resultText = "";
+    for(int i=0; i < textBlocks.size();i++){
+      if(i != textBlocks.size()-1) {
+        Text.TextBlock textBlock = textBlocks.get(i);
+        resultText = resultText + textBlock.getText() + System.lineSeparator() + System.lineSeparator();
+      } else {
+        Text.TextBlock textBlock = textBlocks.get(i);
+        resultText = resultText + textBlock.getText();
+      }
+    }
+    recordText.setText(resultText);
   }
 }
