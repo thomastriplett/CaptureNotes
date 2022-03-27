@@ -136,6 +136,8 @@ public final class ImageActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_image);
+    getSupportActionBar().setIcon(R.drawable.notes);
+    getSupportActionBar().setDisplayShowHomeEnabled(true);
 
     recordText = (TextView) findViewById(R.id.image_record_text);
     noteTitle = findViewById(R.id.image_note_title);
