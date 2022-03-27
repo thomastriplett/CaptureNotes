@@ -5,9 +5,6 @@
         android:id="@+id/saveInAppItem"
         android:title="Save in App" />
     <item
-        android:id="@+id/saveToFileItem"
-        android:title="Save to File" />
-    <item
         android:id="@+id/saveToGoogleDocItem"
         android:title="Save to Google Doc" />
 </menu>

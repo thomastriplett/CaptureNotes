@@ -18,14 +18,17 @@ package com.thomastriplett.capturenotes;
 
 import static java.lang.Math.max;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -42,7 +45,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -99,6 +106,8 @@ public final class ImageActivity extends AppCompatActivity {
 
   private static final int REQUEST_IMAGE_CAPTURE = 1001;
   private static final int REQUEST_CHOOSE_IMAGE = 1002;
+  private static final int REQUEST_CAMERA_PERMISSION = 1003;
+  private static final int REQUEST_STORAGE_PERMISSION = 1004;
 
   private GraphicOverlay graphicOverlay;
   private String selectedMode = OBJECT_DETECTION;
@@ -138,12 +147,20 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.camera_button)
             .setOnClickListener(
                     view -> {
-                      startCameraIntentForResult();
+                      Log.d(TAG, "Camera button clicked");
+                      if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                              == PackageManager.PERMISSION_DENIED) {
+                        ActivityCompat.requestPermissions(this, new String[]
+                                {Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+                      } else {
+                        startCameraIntentForResult();
+                      }
                     });
 
     findViewById(R.id.gallery_button)
             .setOnClickListener(
                     view -> {
+                      Log.d(TAG, "Gallery button clicked");
                       startChooseImageIntentForResult();
                     });
 
@@ -153,6 +170,7 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.image_save_button)
             .setOnClickListener(
                     view -> {
+                      Log.d(TAG, "Save button clicked");
                       view.showContextMenu();
                     });
 
@@ -196,15 +214,13 @@ public final class ImageActivity extends AppCompatActivity {
     }
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.R)
   @Override
   public boolean onContextItemSelected(MenuItem item) {
     AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
     switch(item.getItemId()) {
       case R.id.saveToGoogleDocItem:
         requestSignIn();
-        return true;
-      case R.id.saveToFileItem:
-        writeToFile(recordText.getText().toString());
         return true;
       case R.id.saveInAppItem:
         saveNote(recordText.getText().toString());
@@ -287,16 +303,31 @@ public final class ImageActivity extends AppCompatActivity {
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+      Log.d(TAG,"Capture Image result received");
       tryReloadAndDetectInImage();
     } else if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {
       // In this case, imageUri is returned by the chooser, save it.
+      Log.d(TAG,"Choose Image result received");
       imageUri = data.getData();
       tryReloadAndDetectInImage();
     } else if (requestCode == 400 && resultCode == RESULT_OK) {
+      Log.d(TAG,"Sign in result received");
       handleSignInIntent(data);
-
     } else {
+      Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
       super.onActivityResult(requestCode, resultCode, data);
+    }
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    if (requestCode == REQUEST_CAMERA_PERMISSION) {
+      if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        startCameraIntentForResult();
+      } else {
+        Toast.makeText(this, "Can't use camera without camera permission", Toast.LENGTH_LONG).show();
+      }
     }
   }
 
@@ -324,27 +355,33 @@ public final class ImageActivity extends AppCompatActivity {
     Log.d(TAG, "Try reload and detect image");
     try {
       if (imageUri == null) {
+        Log.d(TAG,"imageUri is null");
         return;
       }
 
       if (SIZE_SCREEN.equals(selectedSize) && imageMaxWidth == 0) {
         // UI layout has not finished yet, will reload once it's ready.
+        Log.d(TAG,"UI layout has not finished yet, will reload once it's ready");
         return;
       }
-
+      Log.d(TAG,"Getting the imageBitmap");
       Bitmap imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
       if (imageBitmap == null) {
+        Log.d(TAG,"imageBitmap is null");
         return;
       }
 
       // Clear the overlay first
+      Log.d(TAG,"Clearing the graphic overlay");
       graphicOverlay.clear();
 
       Bitmap resizedBitmap;
       if (selectedSize.equals(SIZE_ORIGINAL)) {
+        Log.d(TAG,"Bitmap is original size");
         resizedBitmap = imageBitmap;
       } else {
         // Get the dimensions of the image view
+        Log.d(TAG,"Resizing bitmap");
         Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
 
         // Determine how much to scale down the image
@@ -362,6 +399,7 @@ public final class ImageActivity extends AppCompatActivity {
       }
 
       if (imageProcessor != null) {
+        Log.d(TAG,"imageProcessor is not null");
         graphicOverlay.setImageSourceInfo(
             resizedBitmap.getWidth(), resizedBitmap.getHeight(), /* isFlipped= */ false);
         imageProcessor.processBitmap(resizedBitmap, graphicOverlay);
@@ -370,7 +408,6 @@ public final class ImageActivity extends AppCompatActivity {
       }
     } catch (IOException e) {
       Log.e(TAG, "Error retrieving saved image");
-      imageUri = null;
     }
   }
 
@@ -421,37 +458,6 @@ public final class ImageActivity extends AppCompatActivity {
               "Can not create image processor: " + e.getMessage(),
               Toast.LENGTH_LONG)
           .show();
-    }
-  }
-
-  private void writeToFile(String recording) {
-    try {
-      String root = Environment.getExternalStorageDirectory().toString();
-      File myDir = new File(root + "/CaptureNotes/SavedRecordings");
-      myDir.mkdirs();
-
-      String fname = "irecord-"+noteTitle.getText()+".txt";
-
-      File file = new File (myDir, fname);
-
-      FileOutputStream fos = new FileOutputStream(file);
-
-      fos.write(noteTitle.getText().toString().getBytes());
-      fos.write(System.getProperty("line.separator").getBytes());
-      fos.write(System.getProperty("line.separator").getBytes());
-      SimpleDateFormat sd = new SimpleDateFormat("MM/dd/yy hh:mm a");
-      Date newDate = new Date();
-      String date = sd.format(newDate);
-      fos.write(date.getBytes());
-      fos.write(System.getProperty("line.separator").getBytes());
-      fos.write(System.getProperty("line.separator").getBytes());
-      fos.write(recording.getBytes());
-      fos.close();
-      Toast.makeText(ImageActivity.this, "Note Saved to File", Toast.LENGTH_SHORT).show();
-    }
-    catch (IOException e) {
-      Toast.makeText(ImageActivity.this, "Note Not Saved, Try Changing the Title", Toast.LENGTH_SHORT).show();
-      Log.e("Exception", "File write failed: " + e.toString());
     }
   }
 
