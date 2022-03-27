@@ -35,6 +35,8 @@ public class NotesActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
+        getSupportActionBar().setIcon(R.drawable.notes);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         TextView myTextView = findViewById(R.id.myTextView);
         SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username","");

@@ -21,6 +21,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getSupportActionBar().setIcon(R.drawable.notes);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         notesButton = findViewById(R.id.notes_button);
         imageButton = findViewById(R.id.image_button);
