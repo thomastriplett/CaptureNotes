@@ -52,7 +52,7 @@ public class EditActivity extends AppCompatActivity {
                 Context.MODE_PRIVATE,null);
         dbHelper = new DBHelper(sqLiteDatabase);
 
-        SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         String username = sharedPreferences.getString("username","");
 
         DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");

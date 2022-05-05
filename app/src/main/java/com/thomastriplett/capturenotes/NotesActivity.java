@@ -37,10 +37,9 @@ public class NotesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_notes);
         getSupportActionBar().setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        TextView myTextView = findViewById(R.id.myTextView);
-        SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
+        TextView myTextView = findViewById(R.id.notesListHeader);
+        SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username","");
-        myTextView.setText("Captured Notes");
 
         context = getApplicationContext();
         sqLiteDatabase = context.openOrCreateDatabase("notes",

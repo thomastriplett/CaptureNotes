@@ -2,40 +2,47 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/notesListRowLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".NotesActivity">
+    android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/notesListHeader"
+        android:id="@+id/notesListRowTitle"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/colorPrimary"
-        android:fontFamily="casual"
         android:gravity="center"
-        android:text="@string/notes_list_header"
         android:textAlignment="center"
         android:textColor="@android:color/black"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@+id/notesActivityGuideline"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/notesListRowGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ListView
-        android:id="@+id/list_view"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/notesActivityGuideline" />
-
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/notesActivityGuideline"
+        android:id="@+id/notesListRowGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="50dp" />
+        app:layout_constraintGuide_begin="63dp" />
+
+    <TextView
+        android:id="@+id/notesListRowDate"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:textAlignment="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/notesListRowGuideline2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/notesListRowGuideline" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/notesListRowGuideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="135dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

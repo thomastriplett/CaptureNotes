@@ -3,13 +3,15 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/edit_text_background.xml" value="0.2465" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_camera.xml" value="0.25" />
-        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_edit.xml" value="0.20380434782608695" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_edit.xml" value="0.264" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_image.xml" value="0.4" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_main.xml" value="0.4" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_notes.xml" value="0.20380434782608695" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_speech.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_still_image.xml" value="0.25" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/notes_list_row.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/ocr_capture.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/settings_style.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/spinner_style.xml" value="0.25" />

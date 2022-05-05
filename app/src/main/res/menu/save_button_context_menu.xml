@@ -3,8 +3,8 @@
 
     <item
         android:id="@+id/saveInAppItem"
-        android:title="Save in App" />
+        android:title="@string/save_in_app" />
     <item
-        android:id="@+id/saveToGoogleDocItem"
-        android:title="Save to Google Doc" />
+        android:id="@+id/saveInGoogleDocsItem"
+        android:title="@string/save_in_google_docs" />
 </menu>

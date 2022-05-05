@@ -30,7 +30,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
@@ -41,7 +40,6 @@ import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -76,8 +74,6 @@ import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.DateFormat;
@@ -218,7 +214,7 @@ public final class ImageActivity extends AppCompatActivity {
   public boolean onContextItemSelected(MenuItem item) {
     AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
     switch(item.getItemId()) {
-      case R.id.saveToGoogleDocItem:
+      case R.id.saveInGoogleDocsItem:
         requestSignIn();
         return true;
       case R.id.saveInAppItem:
@@ -467,7 +463,7 @@ public final class ImageActivity extends AppCompatActivity {
             Context.MODE_PRIVATE,null);
     dbHelper = new DBHelper(sqLiteDatabase);
 
-    SharedPreferences sharedPreferences = getSharedPreferences("c.sakshi.lab5", Context.MODE_PRIVATE);
+    SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
     String username = sharedPreferences.getString("username","");
 
     String title = noteTitle.getText().toString();

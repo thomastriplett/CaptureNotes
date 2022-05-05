@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="36dp"
         android:onClick="onClick"
-        android:text="Save"
+        android:text="@string/note_save_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -21,23 +21,84 @@
         android:id="@+id/editText"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@drawable/edit_text_background"
         android:ems="10"
         android:gravity="top|left"
-        android:hint="Text goes here"
-        android:inputType="textPersonName"
+        android:hint="@string/edit_note_content_hint"
+        android:inputType="textMultiLine"
+        android:scrollHorizontally="false"
         app:layout_constraintBottom_toTopOf="@+id/saveButton"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTitle" />
+        app:layout_constraintTop_toTopOf="@+id/editHorizontalGuideline2"
+        app:layout_constraintVertical_bias="1.0" />
 
     <EditText
         android:id="@+id/editTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:ems="10"
-        android:hint="Title goes here"
+        android:gravity="center"
+        android:hint="@string/note_title_hint"
         android:inputType="textPersonName"
+        android:minHeight="48dp"
+        app:layout_constraintBottom_toTopOf="@+id/editHorizontalGuideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editTitleDescription" />
+
+    <TextView
+        android:id="@+id/editTitleDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/colorPrimary"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/note_title"
+        android:textAlignment="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/editHorizontalGuideline3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/editHorizontalGuideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="100dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/editHorizontalGuideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="150dp" />
+
+    <TextView
+        android:id="@+id/editTextDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/colorPrimary"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/edit_note_content_description"
+        android:textAlignment="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/editText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/editHorizontalGuideline" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/editHorizontalGuideline3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="50dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

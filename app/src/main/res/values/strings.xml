@@ -1,21 +1,18 @@
 <resources>
     <string name="app_name">CaptureNotes</string>
-    <string name="take_picture">Take picture</string>
-    <string name="ok">OK</string>
-    <string name="permission_camera_rationale">Access to the camera is needed for detection</string>
-    <string name="no_camera_permission">This application cannot run because it does not have the camera permission.  The application will now exit.</string>
-    <string name="low_storage_error">Ocr dependencies cannot be downloaded due to low device storage</string>
-    <string name="title_activity_main">Ocr Detector Sample</string>
-    <string name="ocr_header">Click &quot;Detect Text&quot; to detect text</string>
-    <string name="read_text">Detect Text</string>
-    <string name="auto_focus">Auto Focus</string>
-    <string name="use_flash">Use Flash</string>
-    <string name="ocr_success">Text read successfully</string>
-    <string name="ocr_failure">No text captured</string>
-    <string name="ocr_error">"Error reading text: %1$s"</string>
-    <string name="file_name">Note.json</string>
     <string name="encoding">UTF-8</string>
-    <string name="menu_item_settings" translatable="false">Settings</string>
-    <string name="select_image" translatable="false">Select image</string>
-    <string name="web_client_id">772615309029-raispv703prdrfenafhoogdfkbatrhe9.apps.googleusercontent.com</string>
+    <string name="new_notes_header">Capture new notes</string>
+    <string name="old_notes_header">Review old notes</string>
+    <string name="note_title_hint">Note title goes here</string>
+    <string name="note_body_hint">The recognized words will go here</string>
+    <string name="edit_note_content_hint">Note content goes here</string>
+    <string name="note_title">Note Title:</string>
+    <string name="edit_note_content_description">Note Content:</string>
+    <string name="note_save_button">Save</string>
+    <string name="notes_list_header">Previously Captured Notes</string>
+    <string name="use_camera">Capture notes with Camera</string>
+    <string name="open_gallery">Capture notes in an existing picture</string>
+    <string name="save_note">Save Note</string>
+    <string name="save_in_app">Save in App</string>
+    <string name="save_in_google_docs">Save in Google Docs</string>
 </resources>
