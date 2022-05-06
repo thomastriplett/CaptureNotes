@@ -8,19 +8,20 @@
 
     <ImageView
         android:id="@+id/notes_button"
-        android:layout_width="411dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/micColor"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline5"
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline3"
+        app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/notes_icon" />
 
     <TextView
         android:id="@+id/previousNotesButtonHeader"
-        android:layout_width="411dp"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/colorPrimary"
         android:fontFamily="casual"
@@ -29,26 +30,26 @@
         android:textAlignment="center"
         android:textColor="@android:color/black"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/guideline5"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/horz_guideline" />
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline2" />
 
     <ImageView
         android:id="@+id/image_button"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/cameraColor"
-        app:layout_constraintBottom_toTopOf="@+id/horz_guideline"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline7"
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline"
         app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/camera_icon" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/horz_guideline"
+        android:id="@+id/mainActivityGuideline2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="463dp"
@@ -62,7 +63,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline7"
+        android:id="@+id/mainActivityGuideline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -79,16 +80,33 @@
         android:textAlignment="center"
         android:textColor="@android:color/black"
         android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/guideline7"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline5"
+        android:id="@+id/mainActivityGuideline3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_begin="458dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/mainActivityGuideline4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="732dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline4" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

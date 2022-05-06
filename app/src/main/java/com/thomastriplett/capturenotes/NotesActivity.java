@@ -1,12 +1,17 @@
 package com.thomastriplett.capturenotes;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -20,15 +25,15 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class NotesActivity extends AppCompatActivity {
+public class NotesActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
     public static ArrayList<Note> notes = new ArrayList<>();
     DBHelper dbHelper;
     SQLiteDatabase sqLiteDatabase;
     Context context;
-    ArrayAdapter adapter;
+    NoteAdapter adapter;
     String username;
-    ArrayList<String> displayNotes;
+    private RecyclerView recyclerView; // Layout's recyclerview
     private final String TAG = "In NotesActivity";
 
     @Override
@@ -48,28 +53,51 @@ public class NotesActivity extends AppCompatActivity {
 
         notes = dbHelper.readNotes(username);
 
-        displayNotes = new ArrayList<>();
-        for (Note note : notes) {
-            Log.d(TAG,"Title: "+note.getTitle());
-            displayNotes.add(String.format("Title:%s\nDate:%s", note.getTitle(), note.getDate()));
-        }
-
         Log.i("Info","Number of notes = "+notes.size());
 
-        adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1,displayNotes);
-        ListView listView = (ListView) findViewById(R.id.list_view);
-        listView.setAdapter(adapter);
+        adapter = new NoteAdapter(notes, this);
+        recyclerView = findViewById(R.id.notesListRecyclerView);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
 
-        registerForContextMenu(listView);
+    @Override
+    public void onClick(View v) {
+        int pos = recyclerView.getChildLayoutPosition(v);
+        Intent intent = new Intent(getApplicationContext(), EditActivity.class);
+        intent.putExtra("noteid",pos);
+        startActivity(intent);
+    }
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+    @Override
+    public boolean onLongClick(View v) {
+        int pos = recyclerView.getChildLayoutPosition(v);
+        final Note n = notes.get(pos);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustom);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Intent intent = new Intent(getApplicationContext(), EditActivity.class);
-                intent.putExtra("noteid",position);
-                startActivity(intent);
+            public void onClick(DialogInterface dialogInterface, int i) {
+                notes.remove(n);
+                sqLiteDatabase = context.openOrCreateDatabase("notes",
+                        Context.MODE_PRIVATE,null);
+                dbHelper = new DBHelper(sqLiteDatabase);
+                dbHelper.deleteNote(username,n.getTitle());
+                adapter.notifyDataSetChanged();
             }
         });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                // Do Nothing
+            }
+        });
+
+        builder.setMessage("Do you want to delete this note?");
+        builder.setTitle("Delete Note");
+        AlertDialog dialog =  builder.create();
+        dialog.show();
+        return false;
     }
 
     @Override
@@ -87,44 +115,6 @@ public class NotesActivity extends AppCompatActivity {
                 startActivity(intent2);
                 return true;
             default: return super.onOptionsItemSelected(item);
-        }
-    }
-
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        if (v.getId()==R.id.list_view) {
-            MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.context_menu, menu);
-        }
-    }
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch(item.getItemId()) {
-            case R.id.deleteItem:
-                int position = info.position;
-                Note noteToDelete = notes.get(position);
-                sqLiteDatabase = context.openOrCreateDatabase("notes",
-                        Context.MODE_PRIVATE,null);
-                dbHelper = new DBHelper(sqLiteDatabase);
-                dbHelper.deleteNote(username,noteToDelete.getTitle());
-                notes.remove(position);
-                displayNotes = new ArrayList<>();
-                for (Note note : notes) {
-                    displayNotes.add(String.format("Title:%s\nDate:%s", note.getTitle(), note.getDate()));
-                }
-                adapter.clear();
-                if (displayNotes != null){
-                    for (String note : displayNotes) {
-                        adapter.insert(note, adapter.getCount());
-                    }
-                }
-                adapter.notifyDataSetChanged();
-                return true;
-            default:
-                return super.onContextItemSelected(item);
         }
     }
 }

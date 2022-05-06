@@ -4,16 +4,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/notesListRowLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:background="@drawable/notes_list_row_background">
 
     <TextView
         android:id="@+id/notesListRowTitle"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:fontFamily="casual"
         android:gravity="center"
+        android:text="Title Goes Here"
         android:textAlignment="center"
         android:textColor="@android:color/black"
-        android:textSize="18sp"
+        android:textSize="20sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/notesListRowGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,13 +28,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="63dp" />
+        app:layout_constraintGuide_begin="45dp" />
 
     <TextView
         android:id="@+id/notesListRowDate"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:gravity="center"
+        android:fontFamily="sans-serif-light"
+        android:gravity="center|top"
+        android:text="Date Goes Here"
         android:textAlignment="center"
         android:textColor="@android:color/black"
         android:textSize="18sp"
@@ -44,5 +50,5 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="135dp" />
+        app:layout_constraintGuide_begin="90dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,4 +7,5 @@
     <color name="cameraColor">#0fb8e2</color>
     <color name="saveColor">#28df9f</color>
     <color name="borderColor">#ae9d68</color>
+    <color name="notesBorderColor">#FFFFFF</color>
 </resources>

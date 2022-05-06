@@ -55,7 +55,7 @@ public class EditActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         String username = sharedPreferences.getString("username","");
 
-        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
         String date = dateFormat.format(new Date());
 
         if (noteid == -1) {

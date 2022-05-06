@@ -3,6 +3,7 @@
     <string name="encoding">UTF-8</string>
     <string name="new_notes_header">Capture new notes</string>
     <string name="old_notes_header">Review old notes</string>
+    <string name="default_note_title">Untitled Note</string>
     <string name="note_title_hint">Note title goes here</string>
     <string name="note_body_hint">The recognized words will go here</string>
     <string name="edit_note_content_hint">Note content goes here</string>
@@ -10,6 +11,7 @@
     <string name="edit_note_content_description">Note Content:</string>
     <string name="note_save_button">Save</string>
     <string name="notes_list_header">Previously Captured Notes</string>
+    <string name="notes_row_date_header">Created on:</string>
     <string name="use_camera">Capture notes with Camera</string>
     <string name="open_gallery">Capture notes in an existing picture</string>
     <string name="save_note">Save Note</string>

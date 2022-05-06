@@ -138,7 +138,7 @@ public final class ImageActivity extends AppCompatActivity {
 
     recordText = (TextView) findViewById(R.id.image_record_text);
     noteTitle = findViewById(R.id.image_note_title);
-
+    noteTitle.setText(getString(R.string.default_note_title));
     findViewById(R.id.camera_button)
             .setOnClickListener(
                     view -> {
@@ -467,7 +467,7 @@ public final class ImageActivity extends AppCompatActivity {
     String username = sharedPreferences.getString("username","");
 
     String title = noteTitle.getText().toString();
-    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date);
