@@ -11,6 +11,9 @@ Any data created on your device can be clearing the app's data or uninstalling i
 If you have any concerns or questions, please send me an email and I will get in touch.
 
 Sincerely,
+
 Thomas Triplett
+
 Normal, IL
+
 thomastrip25@gmail.com
