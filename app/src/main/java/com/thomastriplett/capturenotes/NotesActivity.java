@@ -62,6 +62,12 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     }
 
     @Override
+    public void onBackPressed() {
+        Intent mainIntent = new Intent(NotesActivity.this, MainActivity.class);
+        startActivity(mainIntent);
+    }
+
+    @Override
     public void onClick(View v) {
         int pos = recyclerView.getChildLayoutPosition(v);
         Intent intent = new Intent(getApplicationContext(), EditActivity.class);
