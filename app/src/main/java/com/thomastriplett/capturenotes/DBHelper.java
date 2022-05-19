@@ -22,7 +22,7 @@ public class DBHelper {
 
     public void createTable() {
         sqLiteDatabase.execSQL("CREATE TABLE IF NOT EXISTS notes" +
-                "(id INTEGER PRIMARY KEY, username TEXT, date TEXT, title TEXT, content TEXT, src TEXT)");
+                "(id INTEGER PRIMARY KEY, username TEXT, date TEXT, docId TEXT, title TEXT, content TEXT, src TEXT)");
     }
 
     public ArrayList<Note> readNotes(String username) {
@@ -30,6 +30,7 @@ public class DBHelper {
         Cursor c = sqLiteDatabase.rawQuery(String.format("SELECT * from notes where username like '%s'", username),null);
 
         int dateIndex = c.getColumnIndex("date");
+        int docIdIndex = c.getColumnIndex("docId");
         int titleIndex = c.getColumnIndex("title");
         int contentIndex = c.getColumnIndex("content");
 
@@ -41,9 +42,10 @@ public class DBHelper {
 
             String title = c.getString(titleIndex);
             String date = c.getString(dateIndex);
+            String docId = c.getString(docIdIndex);
             String content = c.getString(contentIndex);
 
-            Note note = new Note(date, username, title, content);
+            Note note = new Note(date, username, title, content, docId);
             notesList.add(note);
             c.moveToNext();
         }
@@ -53,17 +55,18 @@ public class DBHelper {
         return notesList;
     }
 
-    public void saveNotes(String username, String title, String content, String date) {
+    public void saveNotes(String username, String title, String content, String date, String docId) {
         createTable();
         ContentValues values = new ContentValues();
         values.put("username", username);
         values.put("date", date);
         values.put("title", title);
         values.put("content", content);
+        values.put("docId", docId);
         sqLiteDatabase.insertWithOnConflict("notes", null, values, CONFLICT_REPLACE);
     }
 
-    public void updateNote(String username, String date, String title, String content, String originalTitle) {
+    public void updateNote(String username, String date, String title, String content, String docId, String originalTitle) {
         createTable();
         ContentValues values = new ContentValues();
         String[] whereArgs = {originalTitle,username};
@@ -71,6 +74,7 @@ public class DBHelper {
         values.put("date", date);
         values.put("title", title);
         values.put("content", content);
+        values.put("docId", docId);
         sqLiteDatabase.updateWithOnConflict("notes", values,
                 "title = ? AND username = ?", whereArgs, CONFLICT_REPLACE);
     }

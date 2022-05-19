@@ -217,7 +217,7 @@ public final class ImageActivity extends AppCompatActivity {
       case R.id.saveInGoogleDocsItem:
         requestSignIn();
         return true;
-      case R.id.saveInAppItem:
+      case R.id.saveOnlyInAppItem:
         saveNote(recordText.getText().toString());
         return true;
       default:
@@ -470,7 +470,25 @@ public final class ImageActivity extends AppCompatActivity {
     DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
     String date = dateFormat.format(new Date());
 
-    dbHelper.saveNotes(username, title, recording, date);
+    dbHelper.saveNotes(username, title, recording, date, "None");
+    Toast.makeText(ImageActivity.this, "Note Saved to DB", Toast.LENGTH_SHORT).show();
+  }
+
+  private void saveNote(String recording, String docId) {
+
+    Context context = getApplicationContext();
+    sqLiteDatabase = context.openOrCreateDatabase("notes",
+            Context.MODE_PRIVATE,null);
+    dbHelper = new DBHelper(sqLiteDatabase);
+
+    SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
+    String username = sharedPreferences.getString("username","");
+
+    String title = noteTitle.getText().toString();
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    String date = dateFormat.format(new Date());
+
+    dbHelper.saveNotes(username, title, recording, date, docId);
     Toast.makeText(ImageActivity.this, "Note Saved to DB", Toast.LENGTH_SHORT).show();
   }
 
@@ -526,6 +544,8 @@ public final class ImageActivity extends AppCompatActivity {
     Log.d(TAG,"Created document with title: " + doc.getTitle());
     String docId = doc.getDocumentId();
     Log.d(TAG,"Document ID: " + docId);
+
+    saveNote(recordText.getText().toString(), docId);
 
     List<Request> requests = new ArrayList<>();
     requests.add(new Request().setInsertText(new InsertTextRequest()
