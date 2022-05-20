@@ -4,7 +4,8 @@
 
     <item
         android:id="@+id/syncItem"
+        android:contentDescription="@string/sync_with_google_docs"
         android:icon="@android:drawable/ic_popup_sync"
-        android:title="Sync with Google Docs"
+        android:title="@string/sync_with_google_docs"
         app:showAsAction="always" />
 </menu>

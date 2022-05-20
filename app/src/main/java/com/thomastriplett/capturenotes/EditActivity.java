@@ -267,8 +267,6 @@ public class EditActivity extends AppCompatActivity {
             int endIndex = 0;
             for (int i = 0; i < contents.size(); i++) {
                 StructuralElement element = contents.get(i);
-                Log.d(TAG, "endIndex = " + element.getEndIndex());
-                Log.d(TAG, "startIndex = " + element.getStartIndex());
                 int elementSize;
                 if (element.getStartIndex() == null) {
                     elementSize = element.getEndIndex();
@@ -278,7 +276,6 @@ public class EditActivity extends AppCompatActivity {
                 endIndex += elementSize;
             }
 
-            Log.d(TAG, "The endIndex is: " + endIndex);
             requests.add(new Request().setDeleteContentRange(
                     new DeleteContentRangeRequest()
                             .setRange(new Range()
