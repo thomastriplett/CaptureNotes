@@ -34,7 +34,7 @@ class GetEditDocTask extends AsyncTask<EditActivity.GetDocTaskParams, Void, Docu
     protected void onPostExecute(Document result) {
         if (result == null) {
             Log.e("Exception", "File upload failed");
-            Toast.makeText(editActivity, "Note Not Saved, Error Retrieving Google Doc", Toast.LENGTH_SHORT).show();
+            editActivity.whenGetTaskFails();
         }
         else {
             editActivity.whenGetDocTaskIsDone(result);

@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/addItem"
-        android:title="Add Note"
-        app:showAsAction="never" />
+        android:contentDescription="@string/add_note"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="@string/add_note"
+        app:showAsAction="always" />
 </menu>

@@ -17,4 +17,6 @@
     <string name="save_note">Save Note</string>
     <string name="save_in_app">Save only in App</string>
     <string name="save_in_google_docs">Save in Google Docs</string>
+    <string name="sync_with_google_docs">Sync with Google Docs</string>
+    <string name="add_note">Add Note</string>
 </resources>
