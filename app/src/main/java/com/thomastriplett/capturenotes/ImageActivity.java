@@ -471,7 +471,7 @@ public final class ImageActivity extends AppCompatActivity {
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, "None");
-    Toast.makeText(ImageActivity.this, "Note Saved to DB", Toast.LENGTH_SHORT).show();
+    Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
   }
 
   private void saveNote(String recording, String docId) {
