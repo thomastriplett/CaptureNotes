@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline8" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="50dp" />
+
+    <TextView
+        android:id="@+id/googleAccountHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_header_background"
+        android:fontFamily="casual"
+        android:gravity="center|left"
+        android:paddingStart="1dp"
+        android:text="@string/google_account"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/saveLocationHeader"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline1" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="119dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="310dp" />
+
+    <TextView
+        android:id="@+id/googleAccountDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_description_background"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/not_signed_in"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/saveLocationDescription"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintStart_toEndOf="@+id/googleAccountHeader"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline1" />
+
+    <Button
+        android:id="@+id/signOutButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_button_alt_background"
+        android:fontFamily="casual"
+        android:text="@string/sign_out"
+        android:textAllCaps="false"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/saveLocationButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/googleAccountDescription"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline1"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/saveLocationHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_header_background"
+        android:fontFamily="casual"
+        android:gravity="center|left"
+        android:paddingStart="1dp"
+        android:text="@string/save_location_header"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline5"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline4" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="150dp" />
+
+    <TextView
+        android:id="@+id/saveLocationDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_description_background"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline5"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintStart_toEndOf="@+id/saveLocationHeader"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline4" />
+
+    <Button
+        android:id="@+id/saveLocationButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_button_background"
+        android:fontFamily="casual"
+        android:text="@string/change_save_location"
+        android:textAllCaps="false"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline4" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="250dp" />
+
+    <TextView
+        android:id="@+id/notesCreatedHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_header_background"
+        android:fontFamily="casual"
+        android:gravity="center|left"
+        android:paddingStart="1dp"
+        android:text="@string/notes_created"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline6"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline5" />
+
+    <TextView
+        android:id="@+id/notesCreatedDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_description_background"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline6"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintStart_toEndOf="@+id/notesCreatedHeader"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline5" />
+
+    <Button
+        android:id="@+id/deleteNotesButton"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_button_alt_background"
+        android:fontFamily="casual"
+        android:text="Clear Notes"
+        android:textAllCaps="false"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline6"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="350dp" />
+
+    <TextView
+        android:id="@+id/settingsHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_title_background"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/settings"
+        android:textColor="@android:color/black"
+        android:textSize="28sp"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="450dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="550dp" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/settingsGuideline9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="650dp" />
+
+    <TextView
+        android:id="@+id/appVersionHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_header_background"
+        android:fontFamily="casual"
+        android:gravity="center|left"
+        android:paddingStart="1dp"
+        android:text="@string/app_version_header"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline7"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/notesCreatedHeader" />
+
+    <TextView
+        android:id="@+id/appVersionDescription"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_description_alt_background"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline7"
+        app:layout_constraintEnd_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintStart_toEndOf="@+id/appVersionHeader"
+        app:layout_constraintTop_toBottomOf="@+id/notesCreatedDescription" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/settings_description_background"
+        app:layout_constraintBottom_toBottomOf="@+id/settingsGuideline7"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/settingsGuideline3"
+        app:layout_constraintTop_toTopOf="@+id/settingsGuideline6" />
+
+    <TextView
+        android:id="@+id/privacyPolicyHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/settings_title_background"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/privacy_policy_header"
+        android:textColor="@android:color/black"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/settingsGuideline8"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appVersionHeader" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

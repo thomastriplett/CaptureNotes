@@ -69,6 +69,7 @@ import com.google.api.services.docs.v1.model.Document;
 import com.google.api.services.docs.v1.model.InsertTextRequest;
 import com.google.api.services.docs.v1.model.Location;
 import com.google.api.services.docs.v1.model.Request;
+import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
@@ -159,14 +160,12 @@ public final class ImageActivity extends AppCompatActivity {
                       startChooseImageIntentForResult();
                     });
 
-    ImageView saveButton = (ImageView) findViewById(R.id.image_save_button);
-    registerForContextMenu(saveButton);
-
     findViewById(R.id.image_save_button)
             .setOnClickListener(
                     view -> {
                       Log.d(TAG, "Save button clicked");
-                      view.showContextMenu();
+                      save();
+//                      view.showContextMenu();
                     });
 
     graphicOverlay = findViewById(R.id.graphic_overlay);
@@ -200,28 +199,16 @@ public final class ImageActivity extends AppCompatActivity {
             });
   }
 
-  @Override
-  public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-    super.onCreateContextMenu(menu, v, menuInfo);
-    if (v.getId()==R.id.image_save_button) {
-      MenuInflater inflater = getMenuInflater();
-      inflater.inflate(R.menu.save_button_context_menu, menu);
+  private void save() {
+    SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
+    String saveLocation = sharedPreferences.getString("saveLocation","");
+    if(saveLocation.equals("googleDocs")){
+      requestSignIn();
     }
-  }
-
-  @RequiresApi(api = Build.VERSION_CODES.R)
-  @Override
-  public boolean onContextItemSelected(MenuItem item) {
-    AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-    switch(item.getItemId()) {
-      case R.id.saveInGoogleDocsItem:
-        requestSignIn();
-        return true;
-      case R.id.saveOnlyInAppItem:
-        saveNote(recordText.getText().toString());
-        return true;
-      default:
-        return super.onContextItemSelected(item);
+    else if(saveLocation.equals("appOnly")){
+      saveNote(recordText.getText().toString());
+    } else {
+      Toast.makeText(this, "Error with Save Location", Toast.LENGTH_LONG).show();
     }
   }
 
@@ -471,6 +458,12 @@ public final class ImageActivity extends AppCompatActivity {
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, "None");
+
+    int noteCount = sharedPreferences.getInt("noteCount",0);
+    SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
+    sharedPreferencesEditor.putInt("noteCount",noteCount+1);
+    sharedPreferencesEditor.apply();
+
     Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
   }
 
@@ -489,7 +482,13 @@ public final class ImageActivity extends AppCompatActivity {
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, docId);
-    Toast.makeText(ImageActivity.this, "Note Saved to DB", Toast.LENGTH_SHORT).show();
+
+    int noteCount = sharedPreferences.getInt("noteCount",0);
+    SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
+    sharedPreferencesEditor.putInt("noteCount",noteCount+1);
+    sharedPreferencesEditor.apply();
+
+    Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
   }
 
   private void onCredentialReceived(GoogleAccountCredential credential){
@@ -559,7 +558,7 @@ public final class ImageActivity extends AppCompatActivity {
   }
 
   public void whenUpdateDocTaskIsDone(BatchUpdateDocumentResponse result) {
-    Toast.makeText(ImageActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show();
+    Toast.makeText(ImageActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show();
   }
 
   public void whenTextRecognitionTaskIsDone(Text text) {
