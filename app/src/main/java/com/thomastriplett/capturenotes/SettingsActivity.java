@@ -55,7 +55,6 @@ public class SettingsActivity extends AppCompatActivity {
     SQLiteDatabase sqLiteDatabase;
     Context context;
     String username;
-    int noteCount;
 
     TextView googleAccountDescription;
     TextView saveLocationDescription;
@@ -98,13 +97,15 @@ public class SettingsActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username","");
         String saveLocation = sharedPreferences.getString("saveLocation","");
-        noteCount = sharedPreferences.getInt("noteCount",0);
         context = getApplicationContext();
         sqLiteDatabase = context.openOrCreateDatabase("notes",
                 Context.MODE_PRIVATE,null);
         dbHelper = new DBHelper(sqLiteDatabase);
 
         notes = dbHelper.readNotes(username);
+
+        googleDocNotes = (ArrayList<Note>) notes.clone();
+        googleDocNotes.removeIf(note -> note.getDocId().equals("None"));
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if(account != null){
@@ -121,11 +122,20 @@ public class SettingsActivity extends AppCompatActivity {
             saveLocationDescription.setText(saveLocation);
         }
 
-        if(noteCount == 1){
-            notesCreatedDescription.setText(noteCount+" note");
+        int googleDocNoteCount = googleDocNotes.size();
+        int localNoteCount = notes.size() - googleDocNoteCount;
+
+        if(googleDocNoteCount == 1 && localNoteCount == 1){
+            notesCreatedDescription.setText(googleDocNoteCount+" note in Google Docs\n"+localNoteCount+" note in app only");
+        }
+        else if(googleDocNoteCount == 1) {
+            notesCreatedDescription.setText(googleDocNoteCount+" note in Google Docs\n"+localNoteCount+" notes in app only");
+        }
+        else if(localNoteCount == 1) {
+            notesCreatedDescription.setText(googleDocNoteCount+" notes in Google Docs\n"+localNoteCount+" note in app only");
         }
         else {
-            notesCreatedDescription.setText(noteCount+" notes");
+            notesCreatedDescription.setText(googleDocNoteCount+" notes in Google Docs\n"+localNoteCount+" notes in app only");
         }
 
         signOutButton.setOnClickListener(new View.OnClickListener() {
@@ -150,12 +160,6 @@ public class SettingsActivity extends AppCompatActivity {
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        for(int j=0; j<notes.size(); j++){
-                            Note note = notes.get(j);
-                            if (!note.getDocId().equals("None")){
-                                googleDocNotes.add(note);
-                            }
-                        }
                         if (googleDocNotes.size() > 0){
                             deleteNotes();
                             createGoogleDocsDeletionToast();

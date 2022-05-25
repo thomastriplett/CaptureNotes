@@ -459,11 +459,6 @@ public final class ImageActivity extends AppCompatActivity {
 
     dbHelper.saveNotes(username, title, recording, date, "None");
 
-    int noteCount = sharedPreferences.getInt("noteCount",0);
-    SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
-    sharedPreferencesEditor.putInt("noteCount",noteCount+1);
-    sharedPreferencesEditor.apply();
-
     Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
   }
 
@@ -482,11 +477,6 @@ public final class ImageActivity extends AppCompatActivity {
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, docId);
-
-    int noteCount = sharedPreferences.getInt("noteCount",0);
-    SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
-    sharedPreferencesEditor.putInt("noteCount",noteCount+1);
-    sharedPreferencesEditor.apply();
 
     Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
   }

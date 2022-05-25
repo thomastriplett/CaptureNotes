@@ -385,11 +385,6 @@ public class EditActivity extends AppCompatActivity {
             dbHelper.updateNote(username, date, title, content, docId, originalTitle);
         }
 
-        int noteCount = sharedPreferences.getInt("noteCount",0);
-        SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
-        sharedPreferencesEditor.putInt("noteCount",noteCount+1);
-        sharedPreferencesEditor.apply();
-
         Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
 
         Intent intent = new Intent(EditActivity.this, NotesActivity.class);
@@ -416,11 +411,6 @@ public class EditActivity extends AppCompatActivity {
         } else  {
             dbHelper.updateNote(username, date, title, content, docId, originalTitle);
         }
-
-        int noteCount = sharedPreferences.getInt("noteCount",0);
-        SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
-        sharedPreferencesEditor.putInt("noteCount",noteCount+1);
-        sharedPreferencesEditor.apply();
 
         Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
 

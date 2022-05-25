@@ -50,7 +50,6 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     Context context;
     NoteAdapter adapter;
     String username;
-    int noteCount;
     String docId;
     private RecyclerView recyclerView;
     private ImageButton addNoteButton;
@@ -73,7 +72,6 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
 
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         username = sharedPreferences.getString("username","");
-        noteCount = sharedPreferences.getInt("noteCount",0);
 
         context = getApplicationContext();
         sqLiteDatabase = context.openOrCreateDatabase("notes",
@@ -173,10 +171,6 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
                 Context.MODE_PRIVATE,null);
         dbHelper = new DBHelper(sqLiteDatabase);
         dbHelper.deleteNote(username,n.getTitle());
-
-        SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
-        sharedPreferencesEditor.putInt("noteCount",noteCount-1);
-        sharedPreferencesEditor.apply();
         Log.d(TAG,"Removing "+i+" item from adapter");
         adapter.notifyDataSetChanged();
     }
