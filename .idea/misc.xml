@@ -7,11 +7,22 @@
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable-v24/notes_list_header_background.xml" value="0.2335" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable-v24/notes_list_row_background.xml" value="0.2335" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/edit_text_background.xml" value="0.2465" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/settings_button_alt_background.xml" value="0.238" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/settings_button_background.xml" value="0.238" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/settings_description_alt_background.xml" value="0.238" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/settings_description_background.xml" value="0.238" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/settings_header_background.xml" value="0.238" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/drawable/settings_title_background.xml" value="0.238" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/action_bar.xml" value="0.24456521739130435" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_camera.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_edit.xml" value="0.264" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_edit_action_bar.xml" value="0.24456521739130435" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_help.xml" value="0.1947463768115942" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_image.xml" value="0.4" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_main.xml" value="0.264" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_notes.xml" value="0.20380434782608695" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_notes_action_bar.xml" value="0.24456521739130435" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_settings.xml" value="0.536" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_speech.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/activity_still_image.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/layout/notes_list_row.xml" value="0.25" />
@@ -21,6 +32,7 @@
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/menu/camera_button_menu.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/menu/context_menu.xml" value="0.25" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/menu/edit_menu.xml" value="0.24635416666666668" />
+        <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/menu/main_menu.xml" value="0.2453125" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/menu/notes_menu.xml" value="0.24635416666666668" />
         <entry key="..\:/Users/Thomas/Documents/New Projects/CaptureNotes/app/src/main/res/menu/save_button_context_menu.xml" value="0.25" />
       </map>

@@ -84,4 +84,10 @@ public class DBHelper {
         String[] whereArgs = {title,username};
         sqLiteDatabase.delete("notes", "title = ? AND username = ?", whereArgs);
     }
+
+    public void deleteNotes(String username) {
+        createTable();
+        String[] whereArgs = {username};
+        sqLiteDatabase.delete("notes", "username = ?", whereArgs);
+    }
 }

@@ -1,12 +1,14 @@
 package com.thomastriplett.capturenotes;
 
+import android.content.Context;
 import android.content.Intent;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -15,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView title;
     private ImageView notesButton;
     private ImageView imageButton;
+    private ImageButton settingsButton;
     private final String TAG = "In MainActivity";
 
     @Override
@@ -23,9 +26,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         getSupportActionBar().setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayOptions(getSupportActionBar().DISPLAY_SHOW_CUSTOM);
+        View cView = getLayoutInflater().inflate(R.layout.activity_main_action_bar, null);
+        getSupportActionBar().setCustomView(cView);
 
         notesButton = findViewById(R.id.notes_button);
         imageButton = findViewById(R.id.image_button);
+        settingsButton = findViewById(R.id.sync_button);
 
         notesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -42,23 +49,22 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(imageIntent);
             }
         });
-    }
 
-    /*
-    public void whenAsyncIsDone(ArrayList<Note> notes) {
-        //textView.setText(textView.getText().toString() + "\n" + string.toString() + " END")
-        if (notes.size() != 0) {
-            //allNotes.addAll(notes);
-            for(int i = 0; i<notes.size(); i++) {
-                Note currentNote = notes.get(i);
-                if (!allNotes.contains(currentNote)) {
-                    allNotes.add(currentNote);
-                }
+        settingsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent2 = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(intent2);
             }
+        });
+
+        SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
+        String saveLocation = sharedPreferences.getString("saveLocation","");
+
+        if(saveLocation.equals("")) {
+            SharedPreferences.Editor editor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
+            editor.putString("saveLocation", "googleDocs");
+            editor.apply();
         }
-        nAdapter.notifyDataSetChanged();
-        Log.d(TAG, String.valueOf(allNotes.size()));
-        Log.d(TAG, "AsyncTask Complete");
     }
-        */
 }

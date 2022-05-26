@@ -4,22 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,7 +29,6 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.DeleteContentRangeRequest;
 import com.google.api.services.docs.v1.model.Document;
 import com.google.api.services.docs.v1.model.InsertTextRequest;
@@ -48,7 +38,9 @@ import com.google.api.services.docs.v1.model.ParagraphElement;
 import com.google.api.services.docs.v1.model.Range;
 import com.google.api.services.docs.v1.model.Request;
 import com.google.api.services.docs.v1.model.StructuralElement;
+import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import com.google.api.services.drive.model.File;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -69,8 +61,10 @@ public class EditActivity extends AppCompatActivity {
     private TextView editText;
     private TextView editTitle;
     private static final String TAG = "EditActivity";
-    private Docs service;
+    private Docs docsService;
+    private Drive driveService;
     String docsRequest = "None";
+    private ImageButton syncButton;
 
     /** Application name. */
     private static final String APPLICATION_NAME = "CaptureNotes";
@@ -81,17 +75,20 @@ public class EditActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
+        getSupportActionBar().setIcon(R.drawable.notes);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setDisplayOptions(getSupportActionBar().DISPLAY_SHOW_CUSTOM);
+        View cView = getLayoutInflater().inflate(R.layout.activity_edit_action_bar, null);
+        getSupportActionBar().setCustomView(cView);
+
         editText = (TextView) findViewById(R.id.editText);
         editTitle = (TextView) findViewById(R.id.editTitle);
-
-        Button saveButton = (Button) findViewById(R.id.edit_save_button);
-        registerForContextMenu(saveButton);
 
         findViewById(R.id.edit_save_button)
                 .setOnClickListener(
                         view -> {
                             Log.d(TAG, "Save button clicked");
-                            view.showContextMenu();
+                            save();
                         });
 
         Intent intent = getIntent();
@@ -106,32 +103,29 @@ public class EditActivity extends AppCompatActivity {
             originalTitle = note.getTitle();
             docId = note.getDocId();
         }
-    }
 
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        if (v.getId()==R.id.edit_save_button) {
-            MenuInflater inflater = getMenuInflater();
-            inflater.inflate(R.menu.save_button_context_menu, menu);
-        }
-    }
+        syncButton = findViewById(R.id.sync_button);
 
-    @RequiresApi(api = Build.VERSION_CODES.R)
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        switch(item.getItemId()) {
-            case R.id.saveInGoogleDocsItem:
-                docsRequest = "save";
+        syncButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                docsRequest = "sync";
                 requestSignIn();
-                Log.d(TAG,"After requestSignIn");
-                return true;
-            case R.id.saveOnlyInAppItem:
-                saveNote();
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+            }
+        });
+    }
+
+    private void save() {
+        SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
+        String saveLocation = sharedPreferences.getString("saveLocation","");
+        if(saveLocation.equals("googleDocs")){
+            docsRequest = "save";
+            requestSignIn();
+        }
+        else if(saveLocation.equals("appOnly")){
+            saveNote();
+        } else {
+            Toast.makeText(this, "Error with Save Location", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -199,6 +193,22 @@ public class EditActivity extends AppCompatActivity {
         }
     }
 
+    protected static class UpdateAndRenameDocTaskParams {
+        Docs service;
+        Drive driveService;
+        String docId;
+        BatchUpdateDocumentRequest body;
+        File file;
+
+        UpdateAndRenameDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body, Drive driveService, File file) {
+            this.service = service;
+            this.docId = docId;
+            this.body = body;
+            this.driveService = driveService;
+            this.file = file;
+        }
+    }
+
     protected static class GetDocTaskParams {
         Docs service;
         String docId;
@@ -213,12 +223,15 @@ public class EditActivity extends AppCompatActivity {
         try{
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-            service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+            docsService = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                     .setApplicationName(APPLICATION_NAME)
                     .build();
-
-            // How do I decide whether to upload the note or sync the note with Google Docs?
             Log.d(TAG,"Docs service created");
+            driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+            Log.d(TAG,"Drive service created");
+
             if(docsRequest.equals("save")){
                 uploadNoteToGoogleDocs();
             }
@@ -239,20 +252,20 @@ public class EditActivity extends AppCompatActivity {
 
     private void uploadNoteToGoogleDocs() {
         if(!docId.equals("None")){
-            EditActivity.GetDocTaskParams getDocParams = new EditActivity.GetDocTaskParams(service,docId);
+            EditActivity.GetDocTaskParams getDocParams = new EditActivity.GetDocTaskParams(docsService,docId);
             new GetEditDocTask(this).execute(getDocParams);
         }
         else {
             Document doc = new Document()
                     .setTitle(editTitle.getText().toString());
-            EditActivity.CreateDocTaskParams params = new EditActivity.CreateDocTaskParams(doc, service);
+            EditActivity.CreateDocTaskParams params = new EditActivity.CreateDocTaskParams(doc, docsService);
             new CreateEditDocTask(EditActivity.this).execute(params);
         }
     }
 
     private void syncNoteWithGoogleDocs() {
         if(!docId.equals("None")){
-            EditActivity.GetDocTaskParams getDocParams = new EditActivity.GetDocTaskParams(service,docId);
+            EditActivity.GetDocTaskParams getDocParams = new EditActivity.GetDocTaskParams(docsService,docId);
             new GetEditDocTask(this).execute(getDocParams);
         }
         else {
@@ -285,12 +298,21 @@ public class EditActivity extends AppCompatActivity {
             requests.add(new Request().setInsertText(new InsertTextRequest()
                     .setText(editText.getText().toString())
                     .setLocation(new Location().setIndex(1))));
-
             BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
-            EditActivity.UpdateDocTaskParams updateParams = new EditActivity.UpdateDocTaskParams(service, docId, body);
-            new UpdateEditDocTask(this).execute(updateParams);
+
+            if(editTitle.getText().toString().equals(originalTitle)) {
+                EditActivity.UpdateDocTaskParams updateParams = new EditActivity.UpdateDocTaskParams(docsService, docId, body);
+                new UpdateEditDocTask(this).execute(updateParams);
+            }
+            else {
+                File file = new File();
+                file.set("name",editTitle.getText().toString());
+                EditActivity.UpdateAndRenameDocTaskParams updateParams = new EditActivity.UpdateAndRenameDocTaskParams(docsService, docId, body, driveService, file);
+                new UpdateAndRenameDocTask(this).execute(updateParams);
+            }
         }
         else if(docsRequest.equals("sync")) {
+            String title = result.getTitle();
             String resultText = "";
             List<StructuralElement> contents = result.getBody().getContent();
             for(int i=0; i<contents.size(); i++){
@@ -302,6 +324,7 @@ public class EditActivity extends AppCompatActivity {
                     }
                 }
             }
+            editTitle.setText(title);
             editText.setText(resultText);
             Toast.makeText(EditActivity.this, "Note Synced with Google Docs", Toast.LENGTH_SHORT).show();
         }
@@ -361,6 +384,7 @@ public class EditActivity extends AppCompatActivity {
         } else {
             dbHelper.updateNote(username, date, title, content, docId, originalTitle);
         }
+
         Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
 
         Intent intent = new Intent(EditActivity.this, NotesActivity.class);
@@ -387,27 +411,10 @@ public class EditActivity extends AppCompatActivity {
         } else  {
             dbHelper.updateNote(username, date, title, content, docId, originalTitle);
         }
+
         Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
 
         Intent intent = new Intent(EditActivity.this, NotesActivity.class);
         startActivity(intent);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu){
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.edit_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item){
-        switch (item.getItemId()){
-            case R.id.syncItem:
-                docsRequest = "sync";
-                requestSignIn();
-                return true;
-            default: return super.onOptionsItemSelected(item);
-        }
     }
 }
