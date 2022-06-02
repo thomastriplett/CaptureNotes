@@ -16,6 +16,8 @@
     <string name="use_camera">Capture notes with Camera</string>
     <string name="open_gallery">Capture notes in an existing picture</string>
     <string name="save_note">Save Note</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
     <string name="save_in_app">Save only in App</string>
     <string name="save_in_google_docs">Save in Google Docs</string>
     <string name="sync_with_google_docs">Sync with Google Docs</string>
