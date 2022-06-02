@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView title;
     private ImageView notesButton;
     private ImageView imageButton;
+    private ImageView audioButton;
     private ImageButton settingsButton;
     private final String TAG = "In MainActivity";
 
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
         notesButton = findViewById(R.id.notes_button);
         imageButton = findViewById(R.id.image_button);
+        audioButton = findViewById(R.id.audio_button);
         settingsButton = findViewById(R.id.sync_button);
 
         notesButton.setOnClickListener(new View.OnClickListener() {
@@ -46,6 +48,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent imageIntent = new Intent(MainActivity.this, ImageActivity.class);
+                startActivity(imageIntent);
+            }
+        });
+
+        audioButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent imageIntent = new Intent(MainActivity.this, SpeechActivity.class);
                 startActivity(imageIntent);
             }
         });

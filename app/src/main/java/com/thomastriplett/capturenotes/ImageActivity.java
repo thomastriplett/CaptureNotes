@@ -165,7 +165,6 @@ public final class ImageActivity extends AppCompatActivity {
                     view -> {
                       Log.d(TAG, "Save button clicked");
                       save();
-//                      view.showContextMenu();
                     });
 
     graphicOverlay = findViewById(R.id.graphic_overlay);

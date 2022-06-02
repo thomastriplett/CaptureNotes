@@ -15,8 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline3"
-        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline6"
         app:srcCompat="@drawable/notes_icon" />
 
     <TextView
@@ -29,12 +28,12 @@
         android:text="@string/old_notes_header"
         android:textAlignment="center"
         android:textColor="@android:color/black"
-        android:textSize="34sp"
-        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline3"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline6"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline2" />
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline3" />
 
     <ImageView
         android:id="@+id/image_button"
@@ -58,7 +57,7 @@
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintGuide_begin="366dp"
+        app:layout_constraintGuide_begin="244dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -76,10 +75,10 @@
         android:background="@color/colorPrimary"
         android:fontFamily="casual"
         android:gravity="center"
-        android:text="@string/new_notes_header"
+        android:text="@string/picture_notes_header"
         android:textAlignment="center"
         android:textColor="@android:color/black"
-        android:textSize="34sp"
+        android:textSize="30sp"
         app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -90,7 +89,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="458dp" />
+        app:layout_constraintGuide_begin="488dp" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/mainActivityGuideline4"
@@ -108,5 +107,46 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline4" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/mainActivityGuideline5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="336dp" />
+
+    <TextView
+        android:id="@+id/audioButtonHeader"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/colorPrimary"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="@string/audio_notes_header"
+        android:textColor="@android:color/black"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline2" />
+
+    <ImageView
+        android:id="@+id/audio_button"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/saveColor"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityGuideline3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/mainActivityGuideline5"
+        app:srcCompat="@drawable/mic_icon" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/mainActivityGuideline6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_begin="580dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

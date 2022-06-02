@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">CaptureNotes</string>
     <string name="encoding">UTF-8</string>
-    <string name="new_notes_header">Capture new notes</string>
+    <string name="picture_notes_header">Capture new notes from a Picture</string>
+    <string name="audio_notes_header">Capture new notes from a Recording</string>
     <string name="old_notes_header">Review old notes</string>
     <string name="default_note_title">Untitled Note</string>
     <string name="note_title_hint">Note title goes here</string>
