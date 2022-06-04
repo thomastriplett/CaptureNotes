@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.camera;
 
 import android.content.Context;
 import android.hardware.Sensor;

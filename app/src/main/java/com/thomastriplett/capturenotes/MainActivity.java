@@ -12,6 +12,11 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.thomastriplett.capturenotes.image.ImageActivity;
+import com.thomastriplett.capturenotes.notes.NotesActivity;
+import com.thomastriplett.capturenotes.settings.SettingsActivity;
+import com.thomastriplett.capturenotes.speech.SpeechActivity;
+
 public class MainActivity extends AppCompatActivity {
 
     private TextView title;

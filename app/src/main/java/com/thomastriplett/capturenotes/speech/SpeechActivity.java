@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.speech;
 
 import android.Manifest;
 import android.content.Context;
@@ -7,13 +7,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.sqlite.SQLiteDatabase;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.Settings;
 
 import android.util.Log;
 import android.view.View;
@@ -64,6 +60,9 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.thomastriplett.capturenotes.common.DBHelper;
+import com.thomastriplett.capturenotes.MainActivity;
+import com.thomastriplett.capturenotes.R;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,8 +77,6 @@ import java.util.List;
 import java.util.Locale;
 
 import static android.Manifest.permission.RECORD_AUDIO;
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static android.os.Build.VERSION.SDK_INT;
 
 public class SpeechActivity extends AppCompatActivity{
     private ImageView recordButton;

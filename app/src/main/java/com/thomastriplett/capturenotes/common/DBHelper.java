@@ -1,14 +1,12 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.common;
 
-import static android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT;
-import static android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL;
-import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
 import static android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
+
+import com.thomastriplett.capturenotes.common.Note;
 
 import java.util.ArrayList;
 

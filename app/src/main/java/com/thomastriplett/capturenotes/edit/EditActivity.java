@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.edit;
 
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +41,10 @@ import com.google.api.services.docs.v1.model.StructuralElement;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
+import com.thomastriplett.capturenotes.common.DBHelper;
+import com.thomastriplett.capturenotes.common.Note;
+import com.thomastriplett.capturenotes.notes.NotesActivity;
+import com.thomastriplett.capturenotes.R;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;

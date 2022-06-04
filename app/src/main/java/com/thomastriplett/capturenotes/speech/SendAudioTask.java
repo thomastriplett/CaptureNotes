@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.speech;
 
 import android.os.AsyncTask;
 import android.os.Build;
@@ -7,11 +7,10 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
-import com.google.api.services.docs.v1.Docs;
-import com.google.api.services.docs.v1.model.Document;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import com.thomastriplett.capturenotes.speech.SpeechActivity;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
