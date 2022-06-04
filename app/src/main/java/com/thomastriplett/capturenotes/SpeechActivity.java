@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.sqlite.SQLiteDatabase;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -66,17 +65,17 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static android.Manifest.permission.RECORD_AUDIO;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -90,15 +89,14 @@ public class SpeechActivity extends AppCompatActivity{
     private TextView noteTitle;
 
 
-    private MediaRecorder mRecorder;
-    private MediaPlayer mPlayer;
-    private static String mFileName = null;
+    private MediaRecorder recorder;
+    private static String fileName = null;
     public static final int REQUEST_AUDIO_PERMISSION_CODE = 1;
-    public static final int REQUEST_ONLY_AUDIO_PERMISSION_CODE = 2;
 
     private Credentials credentials;
     DBHelper dbHelper;
     SQLiteDatabase sqLiteDatabase;
+    String objectName;
 
     /** Application name. */
     private static final String APPLICATION_NAME = "CaptureNotes";
@@ -106,10 +104,9 @@ public class SpeechActivity extends AppCompatActivity{
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     String projectId = "capturenotes";
+    boolean recorderActive = false;
 
     private final String TAG = "SpeechActivity";
-    private boolean keepRecording = false;
-    private ArrayList<String> currentRecording = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,8 +138,12 @@ public class SpeechActivity extends AppCompatActivity{
             @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View v) {
-                stopRecording();
-                sendAudioToGoogleCloud();
+                if (recorderActive) {
+                    stopRecording();
+                    sendAudioToGoogleCloud();
+                } else {
+                    Toast.makeText(SpeechActivity.this, "Not currently recording", Toast.LENGTH_SHORT).show();
+                }
         }
         });
 
@@ -158,23 +159,24 @@ public class SpeechActivity extends AppCompatActivity{
         Log.d(TAG, "In startRecording");
         if (checkPermissions()) {
             Log.d(TAG, "Permissions Found");
-            mFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-            mFileName += "/AudioRecording.amr-wb";
+            fileName = SpeechActivity.this.getFilesDir().getAbsolutePath();
+            fileName += "/AudioRecording.amr-wb";
 
-            Log.d(TAG, "File path name: "+mFileName);
+            Log.d(TAG, "File path name: "+ fileName);
 
-            mRecorder = new MediaRecorder();
-            mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
-            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-            mRecorder.setOutputFile(mFileName);
+            recorder = new MediaRecorder();
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+            recorder.setOutputFile(fileName);
             try {
-                mRecorder.prepare();
+                recorder.prepare();
             } catch (IOException e) {
                 Log.e("TAG", "prepare() failed");
             }
 
-            mRecorder.start();
+            recorder.start();
+            recorderActive = true;
             Toast.makeText(this, "Recording Started", Toast.LENGTH_SHORT).show();
         } else {
             requestPermissions();
@@ -182,27 +184,26 @@ public class SpeechActivity extends AppCompatActivity{
     }
 
     public void stopRecording() {
-        mRecorder.stop();
-
-        mRecorder.release();
-        mRecorder = null;
+        recorder.stop();
+        recorderActive = false;
+        recorder.release();
+        recorder = null;
         Toast.makeText(this, "Recording Stopped", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (recorderActive) {
+            stopRecording();
+        }
+        Intent mainIntent = new Intent(SpeechActivity.this, MainActivity.class);
+        startActivity(mainIntent);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 2296) {
-            if (SDK_INT >= Build.VERSION_CODES.R) {
-                if (Environment.isExternalStorageManager()) {
-                    ActivityCompat.requestPermissions(SpeechActivity.this, new String[]{RECORD_AUDIO}, REQUEST_ONLY_AUDIO_PERMISSION_CODE);
-
-                } else {
-                    Toast.makeText(this, "Allow permission for storage access!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-        else if (requestCode == 400 && resultCode == RESULT_OK) {
+        if (requestCode == 400 && resultCode == RESULT_OK) {
             Log.d(TAG,"Sign in result received");
             handleSignInIntent(data);
         }
@@ -212,28 +213,15 @@ public class SpeechActivity extends AppCompatActivity{
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         // this method is called when user will
         // grant the permission for audio recording.
-        switch (requestCode) {
-            case REQUEST_AUDIO_PERMISSION_CODE:
-                if (grantResults.length > 0) {
-                    boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    boolean permissionToStore = grantResults[1] == PackageManager.PERMISSION_GRANTED;
-                    if (permissionToRecord && permissionToStore) {
-                        Toast.makeText(getApplicationContext(), "Permission Granted", Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Permission Denied", Toast.LENGTH_LONG).show();
-                    }
+        if (requestCode == REQUEST_AUDIO_PERMISSION_CODE) {
+            if (grantResults.length > 0) {
+                boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                if (permissionToRecord) {
+                    Toast.makeText(getApplicationContext(), "Permission Granted", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Microphone Permission Needed", Toast.LENGTH_LONG).show();
                 }
-                break;
-            case REQUEST_ONLY_AUDIO_PERMISSION_CODE:
-                if (grantResults.length > 0) {
-                    boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                    if (permissionToRecord) {
-                        Toast.makeText(getApplicationContext(), "Permission Granted", Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Permission Denied", Toast.LENGTH_LONG).show();
-                    }
-                }
-                break;
+            }
         }
     }
 
@@ -258,34 +246,12 @@ public class SpeechActivity extends AppCompatActivity{
     }
 
     public boolean checkPermissions() {
-        // this method is used to check permission
-        if (SDK_INT >= Build.VERSION_CODES.R) {
-            return Environment.isExternalStorageManager();
-        } else {
-            int result = ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
-            int result1 = ContextCompat.checkSelfPermission(getApplicationContext(), RECORD_AUDIO);
-            return result == PackageManager.PERMISSION_GRANTED && result1 == PackageManager.PERMISSION_GRANTED;
-        }
+        int result1 = ContextCompat.checkSelfPermission(getApplicationContext(), RECORD_AUDIO);
+        return result1 == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermissions() {
-        // this method is used to request the
-        // permission for audio recording and storage.
-        if (SDK_INT >= Build.VERSION_CODES.R) {
-            try {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                intent.addCategory("android.intent.category.DEFAULT");
-                intent.setData(Uri.parse(String.format("package:%s",getApplicationContext().getPackageName())));
-                startActivityForResult(intent, 2296);
-            } catch (Exception e) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivityForResult(intent, 2296);
-            }
-        } else {
-            //below android 11
-            ActivityCompat.requestPermissions(SpeechActivity.this, new String[]{RECORD_AUDIO, WRITE_EXTERNAL_STORAGE}, REQUEST_AUDIO_PERMISSION_CODE);
-        }
+        ActivityCompat.requestPermissions(SpeechActivity.this, new String[]{RECORD_AUDIO}, REQUEST_AUDIO_PERMISSION_CODE);
     }
 
      void getCredentials() {
@@ -317,10 +283,13 @@ public class SpeechActivity extends AppCompatActivity{
     private void sendAudioToGoogleCloud() {
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
         String bucketName = "capturenotes-audio-storage";
-        String objectName = "capturenotes-audio-file-1";
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss", Locale.US);
+        Date date = new Date();
+        String timestamp = dateFormat.format(new Timestamp(date.getTime()));
+        objectName = "capturenotes-audio-file-"+timestamp;
         BlobId blobId = BlobId.of(bucketName, objectName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-        String filePath = mFileName;
+        String filePath = fileName;
 
         SpeechActivity.SendAudioTaskParams params = new SpeechActivity.SendAudioTaskParams(storage, blobInfo, filePath);
         new SendAudioTask(SpeechActivity.this).execute(params);
@@ -329,8 +298,6 @@ public class SpeechActivity extends AppCompatActivity{
 
     public void whenSendAudioTaskIsDone(Blob blob) {
         Log.d(TAG,"In whenSendAudioTaskIsDone");
-        Toast.makeText(this, "Audio File Successfully sent to Google Cloud", Toast.LENGTH_SHORT).show();
-
         try {
             SpeechSettings speechSettings = SpeechSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();
@@ -344,7 +311,7 @@ public class SpeechActivity extends AppCompatActivity{
                     .setSampleRateHertz(sampleRateHertz)
                     .setLanguageCode(languageCode)
                     .build();
-            String uri = "gs://capturenotes-audio-storage/capturenotes-audio-file-1";
+            String uri = "gs://capturenotes-audio-storage/"+objectName;
             RecognitionAudio audio = RecognitionAudio.newBuilder()
                     .setUri(uri)
                     .build();
