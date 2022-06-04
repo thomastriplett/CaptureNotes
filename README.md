@@ -10,6 +10,6 @@ The user now has the option of sending notes to Google Docs instead of only savi
 
 The user can now look at, edit, and delete notes they've already saved.
 
-The speech recognition feature was removed due to the impracticality of using a smartphone mic to record a lecturer.
+The speech recognition feature was updated to use Google Cloud Speech-to-Text, which allows the user to record longer and more accurately than before.
 
 The app has been redesigned for a more visually-appealing experience
