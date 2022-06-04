@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.camera;
 
 /** Describing a frame info. */
 public class FrameMetadata {

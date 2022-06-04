@@ -1,12 +1,14 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.common;
 
-import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.thomastriplett.capturenotes.R;
+import com.thomastriplett.capturenotes.notes.NotesActivity;
 
 import java.util.List;
 
@@ -39,18 +41,10 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteViewHolder> {
                 .append(notesActivity.getString(R.string.notes_row_date_header))
                 .append(" ")
                 .append(note.getDate()).toString());
-//        holder.content.setText(note.getContent());
     }
 
     @Override
     public int getItemCount() {
         return notesList.size();
     }
-
-//    public void onClick(View v) {
-//        int pos = recyclerView.getChildLayoutPosition((View) v.getParent());
-//        Intent intent = new Intent(notesActivity.getApplicationContext(), EditActivity.class);
-//        intent.putExtra("noteid",pos);
-//        notesActivity.startActivity(intent);
-//    }
 }

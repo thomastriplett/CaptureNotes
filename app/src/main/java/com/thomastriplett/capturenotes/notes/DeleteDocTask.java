@@ -1,14 +1,11 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.notes;
 
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.api.services.docs.v1.Docs;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.File;
+import com.thomastriplett.capturenotes.notes.NotesActivity;
 
 class DeleteDocTask extends AsyncTask<NotesActivity.DeleteDocTaskParams, Void, String> {
 

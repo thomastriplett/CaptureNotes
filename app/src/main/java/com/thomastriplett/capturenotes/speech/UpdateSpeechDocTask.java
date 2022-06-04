@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.speech;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -7,20 +7,18 @@ import android.widget.Toast;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
-import com.google.api.services.docs.v1.model.Body;
-import com.google.api.services.docs.v1.model.Document;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.thomastriplett.capturenotes.speech.SpeechActivity;
 
-class UpdateDocTask extends AsyncTask<ImageActivity.UpdateDocTaskParams, Void, BatchUpdateDocumentResponse> {
+class UpdateSpeechDocTask extends AsyncTask<SpeechActivity.UpdateDocTaskParams, Void, BatchUpdateDocumentResponse> {
 
-    private ImageActivity imageActivity;
-    public UpdateDocTask(ImageActivity ia) {
-        imageActivity = ia;
+    private SpeechActivity speechActivity;
+    public UpdateSpeechDocTask(SpeechActivity sa) {
+        speechActivity = sa;
     }
     private Exception exception;
 
     @Override
-    protected BatchUpdateDocumentResponse doInBackground(ImageActivity.UpdateDocTaskParams... params) {
+    protected BatchUpdateDocumentResponse doInBackground(SpeechActivity.UpdateDocTaskParams... params) {
         try {
             Docs service = params[0].service;
             String docId = params[0].docId;
@@ -38,10 +36,10 @@ class UpdateDocTask extends AsyncTask<ImageActivity.UpdateDocTaskParams, Void, B
     protected void onPostExecute(BatchUpdateDocumentResponse result) {
         if (result == null) {
             Log.e("Exception", "File upload failed");
-            Toast.makeText(imageActivity, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
+            Toast.makeText(speechActivity, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
         }
         else {
-            imageActivity.whenUpdateDocTaskIsDone(result);
+            speechActivity.whenUpdateDocTaskIsDone(result);
         }
     }
 

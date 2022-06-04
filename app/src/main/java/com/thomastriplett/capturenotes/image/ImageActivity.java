@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.image;
 
 import static java.lang.Math.max;
 
@@ -28,22 +28,15 @@ import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
-import android.view.ContextMenu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -69,10 +62,13 @@ import com.google.api.services.docs.v1.model.Document;
 import com.google.api.services.docs.v1.model.InsertTextRequest;
 import com.google.api.services.docs.v1.model.Location;
 import com.google.api.services.docs.v1.model.Request;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import com.thomastriplett.capturenotes.camera.BitmapUtils;
+import com.thomastriplett.capturenotes.common.DBHelper;
+import com.thomastriplett.capturenotes.MainActivity;
+import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
 import java.io.IOException;
@@ -165,7 +161,6 @@ public final class ImageActivity extends AppCompatActivity {
                     view -> {
                       Log.d(TAG, "Save button clicked");
                       save();
-//                      view.showContextMenu();
                     });
 
     graphicOverlay = findViewById(R.id.graphic_overlay);

@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.settings;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -39,6 +39,9 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import com.thomastriplett.capturenotes.common.DBHelper;
+import com.thomastriplett.capturenotes.common.Note;
+import com.thomastriplett.capturenotes.R;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;

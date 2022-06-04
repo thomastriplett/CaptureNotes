@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.camera;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -44,12 +44,7 @@ import com.google.android.odml.image.MediaMlImageBuilder;
 import com.google.android.odml.image.MlImage;
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.vision.common.InputImage;
-import com.thomastriplett.capturenotes.BitmapUtils;
-import com.thomastriplett.capturenotes.CameraImageGraphic;
-import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 //import com.thomastriplett.capturenotes.InferenceInfoGraphic;
-import com.thomastriplett.capturenotes.ScopedExecutor;
-import com.thomastriplett.capturenotes.TemperatureMonitor;
 //import com.google.mlkit.vision.demo.preference.PreferenceUtils;
 
 import java.nio.ByteBuffer;

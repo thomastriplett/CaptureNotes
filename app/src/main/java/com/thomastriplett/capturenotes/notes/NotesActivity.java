@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.notes;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -30,12 +30,15 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.DocsScopes;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
+import com.thomastriplett.capturenotes.common.DBHelper;
+import com.thomastriplett.capturenotes.MainActivity;
+import com.thomastriplett.capturenotes.common.Note;
+import com.thomastriplett.capturenotes.common.NoteAdapter;
+import com.thomastriplett.capturenotes.R;
+import com.thomastriplett.capturenotes.edit.EditActivity;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;

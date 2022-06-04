@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.edit;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -6,6 +6,7 @@ import android.widget.Toast;
 
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.Document;
+import com.thomastriplett.capturenotes.edit.EditActivity;
 
 class CreateEditDocTask extends AsyncTask<EditActivity.CreateDocTaskParams, Void, EditActivity.CreateDocTaskParams> {
 

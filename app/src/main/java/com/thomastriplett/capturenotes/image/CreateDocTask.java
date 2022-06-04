@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.image;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -6,7 +6,7 @@ import android.widget.Toast;
 
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.Document;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.thomastriplett.capturenotes.image.ImageActivity;
 
 class CreateDocTask extends AsyncTask<ImageActivity.CreateDocTaskParams, Void, ImageActivity.CreateDocTaskParams> {
 

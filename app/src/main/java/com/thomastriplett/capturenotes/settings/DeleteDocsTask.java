@@ -1,10 +1,11 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.settings;
 
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.google.api.services.drive.Drive;
+import com.thomastriplett.capturenotes.common.Note;
 
 import java.util.ArrayList;
 

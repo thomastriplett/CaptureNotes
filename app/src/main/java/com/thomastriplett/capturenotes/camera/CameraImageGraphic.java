@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.camera;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

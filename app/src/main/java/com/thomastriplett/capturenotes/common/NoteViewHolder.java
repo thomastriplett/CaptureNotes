@@ -1,13 +1,12 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.common;
 
-import android.util.Log;
-import android.view.ContextMenu;
-import android.view.MenuInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.thomastriplett.capturenotes.R;
+import com.thomastriplett.capturenotes.notes.NotesActivity;
 
 public class NoteViewHolder extends RecyclerView.ViewHolder {
     public TextView title;
@@ -22,6 +21,5 @@ public class NoteViewHolder extends RecyclerView.ViewHolder {
         super(view);
         title = (TextView) view.findViewById(R.id.notesListRowTitle);
         date = (TextView) view.findViewById(R.id.notesListRowDate);
-//        content = (TextView) view.findViewById(R.id.milesAway);
     }
 }

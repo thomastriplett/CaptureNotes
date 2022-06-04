@@ -1,13 +1,11 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.edit;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.api.services.docs.v1.Docs;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.Document;
+import com.thomastriplett.capturenotes.edit.EditActivity;
 
 class GetEditDocTask extends AsyncTask<EditActivity.GetDocTaskParams, Void, Document> {
 

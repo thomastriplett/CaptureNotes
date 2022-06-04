@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.image;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -7,30 +7,25 @@ import android.widget.Toast;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
-import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.model.File;
+import com.thomastriplett.capturenotes.image.ImageActivity;
 
-class UpdateAndRenameDocTask extends AsyncTask<EditActivity.UpdateAndRenameDocTaskParams, Void, String> {
+class UpdateDocTask extends AsyncTask<ImageActivity.UpdateDocTaskParams, Void, BatchUpdateDocumentResponse> {
 
-    private EditActivity editActivity;
-    public UpdateAndRenameDocTask(EditActivity ea) {
-        editActivity = ea;
+    private ImageActivity imageActivity;
+    public UpdateDocTask(ImageActivity ia) {
+        imageActivity = ia;
     }
     private Exception exception;
 
     @Override
-    protected String doInBackground(EditActivity.UpdateAndRenameDocTaskParams... params) {
+    protected BatchUpdateDocumentResponse doInBackground(ImageActivity.UpdateDocTaskParams... params) {
         try {
             Docs service = params[0].service;
             String docId = params[0].docId;
             BatchUpdateDocumentRequest body = params[0].body;
             BatchUpdateDocumentResponse response = service.documents()
                     .batchUpdate(docId, body).execute();
-
-            Drive driveService = params[0].driveService;
-            File file = params[0].file;
-            driveService.files().update(docId,file).execute();
-            return docId;
+            return response;
         } catch (Exception e) {
             Log.e("Exception","Error in doInBackground: "+e.toString());
             this.exception = e;
@@ -38,13 +33,13 @@ class UpdateAndRenameDocTask extends AsyncTask<EditActivity.UpdateAndRenameDocTa
         }
     }
 
-    protected void onPostExecute(String result) {
+    protected void onPostExecute(BatchUpdateDocumentResponse result) {
         if (result == null) {
             Log.e("Exception", "File upload failed");
-            Toast.makeText(editActivity, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
+            Toast.makeText(imageActivity, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
         }
         else {
-            editActivity.whenUpdateDocTaskIsDone(result);
+            imageActivity.whenUpdateDocTaskIsDone(result);
         }
     }
 

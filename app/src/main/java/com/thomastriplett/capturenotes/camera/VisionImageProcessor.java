@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.camera;
 
 import android.graphics.Bitmap;
 import android.os.Build.VERSION_CODES;
@@ -23,6 +23,7 @@ import androidx.annotation.RequiresApi;
 import androidx.camera.core.ImageProxy;
 
 import com.google.mlkit.common.MlKitException;
+import com.thomastriplett.capturenotes.camera.FrameMetadata;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 
 import java.nio.ByteBuffer;
@@ -35,7 +36,7 @@ public interface VisionImageProcessor {
 
   /** Processes ByteBuffer image data, e.g. used for Camera1 live preview case. */
   void processByteBuffer(
-      ByteBuffer data, FrameMetadata frameMetadata, GraphicOverlay graphicOverlay)
+          ByteBuffer data, FrameMetadata frameMetadata, GraphicOverlay graphicOverlay)
       throws MlKitException;
 
   /** Processes ImageProxy image data, e.g. used for CameraX live preview case. */

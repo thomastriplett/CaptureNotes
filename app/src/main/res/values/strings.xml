@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">CaptureNotes</string>
     <string name="encoding">UTF-8</string>
-    <string name="new_notes_header">Capture new notes</string>
+    <string name="picture_notes_header">Capture new notes from a Picture</string>
+    <string name="audio_notes_header">Capture new notes from a Recording</string>
     <string name="old_notes_header">Review old notes</string>
     <string name="default_note_title">Untitled Note</string>
     <string name="note_title_hint">Note title goes here</string>
@@ -15,6 +16,8 @@
     <string name="use_camera">Capture notes with Camera</string>
     <string name="open_gallery">Capture notes in an existing picture</string>
     <string name="save_note">Save Note</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
     <string name="save_in_app">Save only in App</string>
     <string name="save_in_google_docs">Save in Google Docs</string>
     <string name="sync_with_google_docs">Sync with Google Docs</string>
