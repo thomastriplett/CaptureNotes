@@ -290,6 +290,9 @@ public final class ImageActivity extends AppCompatActivity {
     } else if (requestCode == 400 && resultCode == RESULT_OK) {
       Log.d(TAG,"Sign in result received");
       handleSignInIntent(data);
+    } else if (requestCode == 400) {
+      Log.d(TAG,"Sign in result received with error");
+      handleSignInIntent(data);
     } else {
       Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
       super.onActivityResult(requestCode, resultCode, data);
@@ -323,7 +326,7 @@ public final class ImageActivity extends AppCompatActivity {
             .addOnFailureListener(new OnFailureListener() {
               @Override
               public void onFailure(@NonNull Exception e) {
-
+                Log.e("GoogleSignIn", "Sign-in failed.", e);
               }
             });
   }
