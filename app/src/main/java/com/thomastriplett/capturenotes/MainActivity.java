@@ -3,10 +3,12 @@ package com.thomastriplett.capturenotes;
 import android.content.Context;
 import android.content.Intent;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -18,12 +20,6 @@ import com.thomastriplett.capturenotes.settings.SettingsActivity;
 import com.thomastriplett.capturenotes.speech.SpeechActivity;
 
 public class MainActivity extends AppCompatActivity {
-
-    private TextView title;
-    private ImageView notesButton;
-    private ImageView imageButton;
-    private ImageView audioButton;
-    private ImageButton settingsButton;
     private final String TAG = "In MainActivity";
 
     @Override
@@ -36,14 +32,17 @@ public class MainActivity extends AppCompatActivity {
         View cView = getLayoutInflater().inflate(R.layout.activity_main_action_bar, null);
         getSupportActionBar().setCustomView(cView);
 
-        notesButton = findViewById(R.id.notes_button);
-        imageButton = findViewById(R.id.image_button);
-        audioButton = findViewById(R.id.audio_button);
-        settingsButton = findViewById(R.id.sync_button);
+        ImageView notesButton = findViewById(R.id.notes_button);
+        ImageView imageButton = findViewById(R.id.image_button);
+        ImageView audioButton = findViewById(R.id.audio_button);
+
+        ActionBar actionBar = getSupportActionBar();
+        ImageButton settingsButton = actionBar.getCustomView().findViewById(R.id.sync_button);
 
         notesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "Notes Button Clicked");
                 Intent notesIntent = new Intent(MainActivity.this, NotesActivity.class);
                 startActivity(notesIntent);
             }
@@ -52,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "Image Button Clicked");
                 Intent imageIntent = new Intent(MainActivity.this, ImageActivity.class);
                 startActivity(imageIntent);
             }
@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         audioButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "Audio Button Clicked");
                 Intent imageIntent = new Intent(MainActivity.this, SpeechActivity.class);
                 startActivity(imageIntent);
             }
@@ -68,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "Settings Button Clicked");
                 Intent intent2 = new Intent(MainActivity.this, SettingsActivity.class);
                 startActivity(intent2);
             }

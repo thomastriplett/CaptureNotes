@@ -190,6 +190,7 @@ public class SpeechActivity extends AppCompatActivity{
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         if (recorderActive) {
             stopRecording();
         }
@@ -210,6 +211,7 @@ public class SpeechActivity extends AppCompatActivity{
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         // this method is called when user will
         // grant the permission for audio recording.
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_AUDIO_PERMISSION_CODE) {
             if (grantResults.length > 0) {
                 boolean permissionToRecord = grantResults[0] == PackageManager.PERMISSION_GRANTED;
@@ -278,6 +280,7 @@ public class SpeechActivity extends AppCompatActivity{
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void sendAudioToGoogleCloud() {
+        Log.d(TAG, "credentials: "+credentials);
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
         String bucketName = "capturenotes-audio-storage";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss", Locale.US);

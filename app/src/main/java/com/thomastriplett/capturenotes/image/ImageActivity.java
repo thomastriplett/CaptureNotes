@@ -67,7 +67,6 @@ import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.BitmapUtils;
 import com.thomastriplett.capturenotes.common.DBHelper;
-import com.thomastriplett.capturenotes.MainActivity;
 import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
@@ -79,6 +78,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /** Activity demonstrating different image detector features with a still image from camera. */
 @KeepName
@@ -139,7 +139,7 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.camera_button)
             .setOnClickListener(
                     view -> {
-                      Log.d(TAG, "Camera button clicked");
+                      Log.i(TAG, "Camera button clicked");
                       if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                               == PackageManager.PERMISSION_DENIED) {
                         ActivityCompat.requestPermissions(this, new String[]
@@ -152,14 +152,14 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.gallery_button)
             .setOnClickListener(
                     view -> {
-                      Log.d(TAG, "Gallery button clicked");
+                      Log.i(TAG, "Gallery button clicked");
                       startChooseImageIntentForResult();
                     });
 
     findViewById(R.id.image_save_button)
             .setOnClickListener(
                     view -> {
-                      Log.d(TAG, "Save button clicked");
+                      Log.i(TAG, "Save button clicked");
                       save();
                     });
 
@@ -240,12 +240,6 @@ public final class ImageActivity extends AppCompatActivity {
     if (imageProcessor != null) {
       imageProcessor.stop();
     }
-  }
-
-  @Override
-  public void onBackPressed() {
-    Intent mainIntent = new Intent(ImageActivity.this, MainActivity.class);
-    startActivity(mainIntent);
   }
 
   @Override
@@ -452,7 +446,7 @@ public final class ImageActivity extends AppCompatActivity {
     String username = sharedPreferences.getString("username","");
 
     String title = noteTitle.getText().toString();
-    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, "None");
@@ -471,7 +465,7 @@ public final class ImageActivity extends AppCompatActivity {
     String username = sharedPreferences.getString("username","");
 
     String title = noteTitle.getText().toString();
-    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, docId);
@@ -552,16 +546,16 @@ public final class ImageActivity extends AppCompatActivity {
   public void whenTextRecognitionTaskIsDone(Text text) {
     List<Text.TextBlock> textBlocks = text.getTextBlocks();
     Log.d(TAG, "There are "+textBlocks.size()+" TextBlocks");
-    String resultText = "";
+    StringBuilder resultText = new StringBuilder();
     for(int i=0; i < textBlocks.size();i++){
       if(i != textBlocks.size()-1) {
         Text.TextBlock textBlock = textBlocks.get(i);
-        resultText = resultText + textBlock.getText() + System.lineSeparator() + System.lineSeparator();
+        resultText.append(textBlock.getText()).append(System.lineSeparator()).append(System.lineSeparator());
       } else {
         Text.TextBlock textBlock = textBlocks.get(i);
-        resultText = resultText + textBlock.getText();
+        resultText.append(textBlock.getText());
       }
     }
-    recordText.setText(resultText);
+    recordText.setText(resultText.toString());
   }
 }

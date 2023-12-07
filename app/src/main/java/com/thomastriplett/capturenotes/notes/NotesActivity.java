@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 public class NotesActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
@@ -55,7 +57,6 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     String username;
     String docId;
     private RecyclerView recyclerView;
-    private ImageButton addNoteButton;
     private final String TAG = "In NotesActivity";
 
     /** Application name. */
@@ -67,7 +68,7 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
-        getSupportActionBar().setIcon(R.drawable.notes);
+        Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setDisplayOptions(getSupportActionBar().DISPLAY_SHOW_CUSTOM);
         View cView = getLayoutInflater().inflate(R.layout.activity_notes_action_bar, null);
@@ -90,11 +91,13 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        addNoteButton = findViewById(R.id.sync_button);
+        ActionBar actionBar = getSupportActionBar();
+        ImageButton addNoteButton = actionBar.getCustomView().findViewById(R.id.sync_button);
 
         addNoteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, "Add Note Button Clicked");
                 Intent intent2 = new Intent(NotesActivity.this, EditActivity.class);
                 startActivity(intent2);
             }
@@ -102,14 +105,9 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     }
 
     @Override
-    public void onBackPressed() {
-        Intent mainIntent = new Intent(NotesActivity.this, MainActivity.class);
-        startActivity(mainIntent);
-    }
-
-    @Override
     public void onClick(View v) {
         int pos = recyclerView.getChildLayoutPosition(v);
+        Log.i(TAG, "Note in position "+pos+" clicked");
         Intent intent = new Intent(getApplicationContext(), EditActivity.class);
         intent.putExtra("noteid",pos);
         startActivity(intent);
@@ -119,6 +117,7 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public boolean onLongClick(View v) {
         int pos = recyclerView.getChildLayoutPosition(v);
+        Log.i(TAG, "Note in position "+pos+" long clicked");
         final Note n = notes.get(pos);
         docId = n.getDocId();
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustom);

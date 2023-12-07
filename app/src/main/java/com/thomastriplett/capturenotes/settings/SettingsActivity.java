@@ -106,7 +106,7 @@ public class SettingsActivity extends AppCompatActivity {
         dbHelper = new DBHelper(sqLiteDatabase);
 
         notes = dbHelper.readNotes(username);
-
+        Log.i(TAG, "Read "+notes.size()+" notes from DB");
         googleDocNotes = (ArrayList<Note>) notes.clone();
         googleDocNotes.removeIf(note -> note.getDocId().equals("None"));
 
@@ -127,6 +127,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         int googleDocNoteCount = googleDocNotes.size();
         int localNoteCount = notes.size() - googleDocNoteCount;
+
+        Log.i(TAG, googleDocNoteCount+" Google Doc Notes");
+        Log.i(TAG, localNoteCount+" Local Notes");
 
         if(googleDocNoteCount == 1 && localNoteCount == 1){
             notesCreatedDescription.setText(googleDocNoteCount+" note in Google Docs\n"+localNoteCount+" note in app only");
