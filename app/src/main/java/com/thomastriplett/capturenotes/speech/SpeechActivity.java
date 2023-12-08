@@ -60,6 +60,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.MainActivity;
 import com.thomastriplett.capturenotes.R;
@@ -199,15 +200,6 @@ public class SpeechActivity extends AppCompatActivity{
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 400 && resultCode == RESULT_OK) {
-            Log.d(TAG,"Sign in result received");
-            handleSignInIntent(data);
-        }
-    }
-
-    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         // this method is called when user will
         // grant the permission for audio recording.
@@ -222,26 +214,6 @@ public class SpeechActivity extends AppCompatActivity{
                 }
             }
         }
-    }
-
-    private void handleSignInIntent(Intent data) {
-        GoogleSignIn.getSignedInAccountFromIntent(data)
-                .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                        GoogleAccountCredential credential = GoogleAccountCredential
-                                .usingOAuth2(SpeechActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
-
-                        credential.setSelectedAccount(googleSignInAccount.getAccount());
-                        onCredentialReceived(credential);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });
     }
 
     public boolean checkPermissions() {
@@ -329,18 +301,6 @@ public class SpeechActivity extends AppCompatActivity{
         }
     }
 
-    private void requestSignIn() {
-        Log.d(TAG, "In requestSignIn");
-        GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
-                .build();
-
-        GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-        startActivityForResult(client.getSignInIntent(),400);
-    }
-
     private void saveNote(String recording) {
 
         Context context = getApplicationContext();
@@ -379,11 +339,11 @@ public class SpeechActivity extends AppCompatActivity{
         Toast.makeText(SpeechActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
     }
 
-    private void onCredentialReceived(GoogleAccountCredential credential){
+    private void uploadNoteToGoogleDocs(){
         try{
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-            Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+            Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
                     .setApplicationName(APPLICATION_NAME)
                     .build();
 
@@ -456,7 +416,7 @@ public class SpeechActivity extends AppCompatActivity{
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         String saveLocation = sharedPreferences.getString("saveLocation","");
         if(saveLocation.equals("googleDocs")){
-            requestSignIn();
+            uploadNoteToGoogleDocs();
         }
         else if(saveLocation.equals("appOnly")){
             saveNote(recordText.getText().toString());

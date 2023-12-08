@@ -39,6 +39,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.common.Note;
 import com.thomastriplett.capturenotes.R;
@@ -272,7 +273,7 @@ public class SettingsActivity extends AppCompatActivity {
         secondBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int j) {
-                requestSignIn();
+                deleteNotesFromGoogleDocs();
             }
         });
         secondBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -287,53 +288,11 @@ public class SettingsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void requestSignIn() {
-        GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
-                .build();
-
-        GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-        startActivityForResult(client.getSignInIntent(),400);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 400 && resultCode == RESULT_OK) {
-            Log.d(TAG,"Sign in result received");
-            handleSignInIntent(data);
-        } else {
-            Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    private void handleSignInIntent(Intent data) {
-        GoogleSignIn.getSignedInAccountFromIntent(data)
-                .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                        GoogleAccountCredential credential = GoogleAccountCredential
-                                .usingOAuth2(SettingsActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
-
-                        credential.setSelectedAccount(googleSignInAccount.getAccount());
-                        onCredentialReceived(credential);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });
-    }
-
-    private void onCredentialReceived(GoogleAccountCredential credential){
+    private void deleteNotesFromGoogleDocs(){
         try{
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-            Drive driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+            Drive driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
                     .setApplicationName(APPLICATION_NAME)
                     .build();
             Log.d(TAG,"Drive service created");

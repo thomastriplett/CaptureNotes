@@ -66,6 +66,7 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.BitmapUtils;
+import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
@@ -198,24 +199,13 @@ public final class ImageActivity extends AppCompatActivity {
     SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
     String saveLocation = sharedPreferences.getString("saveLocation","");
     if(saveLocation.equals("googleDocs")){
-      requestSignIn();
+      uploadNoteToGoogleDocs();
     }
     else if(saveLocation.equals("appOnly")){
       saveNote(recordText.getText().toString());
     } else {
       Toast.makeText(this, "Error with Save Location", Toast.LENGTH_LONG).show();
     }
-  }
-
-  private void requestSignIn() {
-    GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
-            .build();
-
-    GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-    startActivityForResult(client.getSignInIntent(),400);
   }
 
   @Override
@@ -281,12 +271,6 @@ public final class ImageActivity extends AppCompatActivity {
       Log.d(TAG,"Choose Image result received");
       imageUri = data.getData();
       tryReloadAndDetectInImage();
-    } else if (requestCode == 400 && resultCode == RESULT_OK) {
-      Log.d(TAG,"Sign in result received");
-      handleSignInIntent(data);
-    } else if (requestCode == 400) {
-      Log.d(TAG,"Sign in result received with error");
-      handleSignInIntent(data);
     } else {
       Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
       super.onActivityResult(requestCode, resultCode, data);
@@ -303,26 +287,6 @@ public final class ImageActivity extends AppCompatActivity {
         Toast.makeText(this, "Can't use camera without camera permission", Toast.LENGTH_LONG).show();
       }
     }
-  }
-
-  private void handleSignInIntent(Intent data) {
-    GoogleSignIn.getSignedInAccountFromIntent(data)
-            .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-              @Override
-              public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                GoogleAccountCredential credential = GoogleAccountCredential
-                        .usingOAuth2(ImageActivity.this,Collections.singleton(DocsScopes.DRIVE_FILE));
-
-                credential.setSelectedAccount(googleSignInAccount.getAccount());
-                onCredentialReceived(credential);
-              }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-              @Override
-              public void onFailure(@NonNull Exception e) {
-                Log.e("GoogleSignIn", "Sign-in failed.", e);
-              }
-            });
   }
 
   private void tryReloadAndDetectInImage() {
@@ -473,11 +437,11 @@ public final class ImageActivity extends AppCompatActivity {
     Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
   }
 
-  private void onCredentialReceived(GoogleAccountCredential credential){
+  private void uploadNoteToGoogleDocs(){
     try{
       final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-      Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+      Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
               .setApplicationName(APPLICATION_NAME)
               .build();
 

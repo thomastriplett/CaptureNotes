@@ -7,7 +7,7 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,21 +19,12 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.DriveScopes;
+import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.MainActivity;
 import com.thomastriplett.capturenotes.common.Note;
@@ -44,7 +35,6 @@ import com.thomastriplett.capturenotes.edit.EditActivity;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Objects;
 
 public class NotesActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
@@ -92,7 +82,7 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         ActionBar actionBar = getSupportActionBar();
-        ImageButton addNoteButton = actionBar.getCustomView().findViewById(R.id.sync_button);
+        ImageButton addNoteButton = actionBar.getCustomView().findViewById(R.id.add_note_button);
 
         addNoteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,6 +90,16 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
                 Log.i(TAG, "Add Note Button Clicked");
                 Intent intent2 = new Intent(NotesActivity.this, EditActivity.class);
                 startActivity(intent2);
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Intent mainIntent = new Intent(NotesActivity.this, MainActivity.class);
+                mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(mainIntent);
+                finish();
             }
         });
     }
@@ -152,7 +152,7 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
         secondBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int j) {
-                requestSignIn();
+                uploadNoteToGoogleDocs();
             }
         });
         secondBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -177,53 +177,11 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
         adapter.notifyDataSetChanged();
     }
 
-    private void requestSignIn() {
-        GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
-                .build();
-
-        GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-        startActivityForResult(client.getSignInIntent(),400);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 400 && resultCode == RESULT_OK) {
-            Log.d(TAG,"Sign in result received");
-            handleSignInIntent(data);
-        } else {
-            Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    private void handleSignInIntent(Intent data) {
-        GoogleSignIn.getSignedInAccountFromIntent(data)
-                .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                        GoogleAccountCredential credential = GoogleAccountCredential
-                                .usingOAuth2(NotesActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
-
-                        credential.setSelectedAccount(googleSignInAccount.getAccount());
-                        onCredentialReceived(credential);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });
-    }
-
-    private void onCredentialReceived(GoogleAccountCredential credential){
+    private void uploadNoteToGoogleDocs(){
         try{
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 
-            Drive driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+            Drive driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
                     .setApplicationName(APPLICATION_NAME)
                     .build();
             Log.d(TAG,"Drive service created");

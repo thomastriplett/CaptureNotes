@@ -3,6 +3,7 @@ package com.thomastriplett.capturenotes;
 import android.content.Context;
 import android.content.Intent;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -12,12 +13,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
+import com.google.api.services.docs.v1.DocsScopes;
+import com.google.api.services.drive.DriveScopes;
+import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.image.ImageActivity;
 import com.thomastriplett.capturenotes.notes.NotesActivity;
 import com.thomastriplett.capturenotes.settings.SettingsActivity;
 import com.thomastriplett.capturenotes.speech.SpeechActivity;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "In MainActivity";
@@ -37,7 +49,9 @@ public class MainActivity extends AppCompatActivity {
         ImageView audioButton = findViewById(R.id.audio_button);
 
         ActionBar actionBar = getSupportActionBar();
-        ImageButton settingsButton = actionBar.getCustomView().findViewById(R.id.sync_button);
+        ImageButton settingsButton = actionBar.getCustomView().findViewById(R.id.settings_button);
+
+        requestSignIn();
 
         notesButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,5 +97,47 @@ public class MainActivity extends AppCompatActivity {
             editor.putString("saveLocation", "googleDocs");
             editor.apply();
         }
+    }
+
+    private void requestSignIn() {
+        GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
+                .build();
+
+        GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
+
+        startActivityForResult(client.getSignInIntent(),400);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 400 && resultCode == RESULT_OK) {
+            Log.d(TAG,"Sign in result received");
+            handleSignInIntent(data);
+        } else {
+            Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void handleSignInIntent(Intent data) {
+        GoogleSignIn.getSignedInAccountFromIntent(data)
+                .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
+                    @Override
+                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
+                        GoogleAccountCredential credential = GoogleAccountCredential
+                                .usingOAuth2(MainActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
+
+                        credential.setSelectedAccount(googleSignInAccount.getAccount());
+                        AuthManager.getInstance().setUserCredential(credential);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e("GoogleSignIn", "Sign-in failed.", e);
+                    }
+                });
     }
 }
