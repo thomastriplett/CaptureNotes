@@ -6,7 +6,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.thomastriplett.capturenotes.R;
-import com.thomastriplett.capturenotes.notes.NotesActivity;
+import com.thomastriplett.capturenotes.activity.NotesActivity;
 
 public class NoteViewHolder extends RecyclerView.ViewHolder {
     public TextView title;

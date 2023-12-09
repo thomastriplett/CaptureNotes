@@ -24,7 +24,7 @@ import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.vision.common.InputImage;
-import com.thomastriplett.capturenotes.image.ImageActivity;
+import com.thomastriplett.capturenotes.activity.ImageActivity;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
 import com.thomastriplett.capturenotes.camera.VisionProcessorBase;
 //import com.google.mlkit.vision.demo.preference.PreferenceUtils;

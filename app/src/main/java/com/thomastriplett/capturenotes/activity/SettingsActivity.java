@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes.settings;
+package com.thomastriplett.capturenotes.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -31,9 +31,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.DocsScopes;
@@ -42,11 +39,12 @@ import com.google.api.services.drive.DriveScopes;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.common.Note;
 import com.thomastriplett.capturenotes.R;
+import com.thomastriplett.capturenotes.google.docs.DeleteGoogleDoc;
+import com.thomastriplett.capturenotes.google.services.DriveService;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -73,6 +71,9 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String APPLICATION_NAME = "CaptureNotes";
     /** Global instance of the JSON factory. */
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private Drive driveService;
+    Executor executor = Executors.newSingleThreadExecutor();
+    DeleteGoogleDoc deleteGoogleDoc = new DeleteGoogleDoc();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,9 +107,9 @@ public class SettingsActivity extends AppCompatActivity {
         dbHelper = new DBHelper(sqLiteDatabase);
 
         notes = dbHelper.readNotes(username);
-
+        Log.i(TAG, "Read "+notes.size()+" notes from DB");
         googleDocNotes = (ArrayList<Note>) notes.clone();
-        googleDocNotes.removeIf(note -> note.getDocId().equals("None"));
+        googleDocNotes.removeIf(note -> note.getDocId() != null && note.getDocId().equals("None"));
 
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
         if(account != null){
@@ -127,6 +128,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         int googleDocNoteCount = googleDocNotes.size();
         int localNoteCount = notes.size() - googleDocNoteCount;
+
+        Log.i(TAG, googleDocNoteCount+" Google Doc Notes");
+        Log.i(TAG, localNoteCount+" Local Notes");
 
         if(googleDocNoteCount == 1 && localNoteCount == 1){
             notesCreatedDescription.setText(googleDocNoteCount+" note in Google Docs\n"+localNoteCount+" note in app only");
@@ -192,6 +196,8 @@ public class SettingsActivity extends AppCompatActivity {
                 goToPrivacyPolicy(v);
             }
         });
+
+        driveService = DriveService.build();
     }
 
     @Override
@@ -269,7 +275,7 @@ public class SettingsActivity extends AppCompatActivity {
         secondBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int j) {
-                requestSignIn();
+                deleteNotesFromGoogleDocs();
             }
         });
         secondBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -284,84 +290,18 @@ public class SettingsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void requestSignIn() {
-        GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
-                .build();
-
-        GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-        startActivityForResult(client.getSignInIntent(),400);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 400 && resultCode == RESULT_OK) {
-            Log.d(TAG,"Sign in result received");
-            handleSignInIntent(data);
-        } else {
-            Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    private void handleSignInIntent(Intent data) {
-        GoogleSignIn.getSignedInAccountFromIntent(data)
-                .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                        GoogleAccountCredential credential = GoogleAccountCredential
-                                .usingOAuth2(SettingsActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
-
-                        credential.setSelectedAccount(googleSignInAccount.getAccount());
-                        onCredentialReceived(credential);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-
-                    }
-                });
-    }
-
-    private void onCredentialReceived(GoogleAccountCredential credential){
-        try{
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-            Drive driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            Log.d(TAG,"Drive service created");
-
-            SettingsActivity.DeleteDocsTaskParams updateParams = new SettingsActivity.DeleteDocsTaskParams(googleDocNotes, driveService);
-            new DeleteDocsTask(this).execute(updateParams);
-
-
-        } catch(IOException e) {
-            Toast.makeText(SettingsActivity.this, "Google Docs copies not deleted", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File deletion failed: " + e.toString());
-        }
-        catch(GeneralSecurityException e) {
-            Toast.makeText(SettingsActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File deletion failed: " + e.toString());
-        }
-    }
-
-    public void whenDeleteDocsTaskIsDone(String result) {
-        Toast.makeText(SettingsActivity.this, "Google Docs copies deleted", Toast.LENGTH_SHORT).show();
-        googleDocNotes.clear();
-    }
-
-    protected static class DeleteDocsTaskParams {
-        Drive driveService;
-        ArrayList<Note> docNotes;
-
-        DeleteDocsTaskParams(ArrayList<Note> docNotes, Drive driveService) {
-            this.docNotes = docNotes;
-            this.driveService = driveService;
-        }
+    private void deleteNotesFromGoogleDocs(){
+        deleteGoogleDoc.execute(driveService, googleDocNotes, executor, result -> {
+            // Handle the result on the main thread
+            if (!result) {
+                Log.e(TAG, "Error deleting notes from Google Docs");
+                runOnUiThread(() -> Toast.makeText(SettingsActivity.this, "Error Deleting Notes from Google Doc", Toast.LENGTH_SHORT).show());
+            }
+            else {
+                runOnUiThread(() -> Toast.makeText(SettingsActivity.this, "Google Docs copies deleted", Toast.LENGTH_SHORT).show());
+                googleDocNotes.clear();
+            }
+        });
     }
 
     private void goToUrl (String url) {

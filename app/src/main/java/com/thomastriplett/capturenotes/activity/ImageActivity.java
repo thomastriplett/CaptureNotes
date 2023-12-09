@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes.image;
+package com.thomastriplett.capturenotes.activity;
 
 import static java.lang.Math.max;
 
@@ -41,44 +41,32 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.annotation.KeepName;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.Docs;
-import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.Document;
 import com.google.api.services.docs.v1.model.InsertTextRequest;
 import com.google.api.services.docs.v1.model.Location;
 import com.google.api.services.docs.v1.model.Request;
-import com.google.api.services.drive.DriveScopes;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.BitmapUtils;
 import com.thomastriplett.capturenotes.common.DBHelper;
-import com.thomastriplett.capturenotes.MainActivity;
 import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
+import com.thomastriplett.capturenotes.google.docs.CreateGoogleDoc;
+import com.thomastriplett.capturenotes.google.docs.UpdateGoogleDoc;
+import com.thomastriplett.capturenotes.google.services.DocsService;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /** Activity demonstrating different image detector features with a still image from camera. */
 @KeepName
@@ -120,10 +108,10 @@ public final class ImageActivity extends AppCompatActivity {
   DBHelper dbHelper;
   SQLiteDatabase sqLiteDatabase;
 
-  /** Application name. */
-  private static final String APPLICATION_NAME = "CaptureNotes";
-  /** Global instance of the JSON factory. */
-  private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+  private Docs docsService;
+  Executor executor = Executors.newSingleThreadExecutor();
+  CreateGoogleDoc createGoogleDoc = new CreateGoogleDoc();
+  UpdateGoogleDoc updateGoogleDoc = new UpdateGoogleDoc();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -139,7 +127,7 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.camera_button)
             .setOnClickListener(
                     view -> {
-                      Log.d(TAG, "Camera button clicked");
+                      Log.i(TAG, "Camera button clicked");
                       if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                               == PackageManager.PERMISSION_DENIED) {
                         ActivityCompat.requestPermissions(this, new String[]
@@ -152,14 +140,14 @@ public final class ImageActivity extends AppCompatActivity {
     findViewById(R.id.gallery_button)
             .setOnClickListener(
                     view -> {
-                      Log.d(TAG, "Gallery button clicked");
+                      Log.i(TAG, "Gallery button clicked");
                       startChooseImageIntentForResult();
                     });
 
     findViewById(R.id.image_save_button)
             .setOnClickListener(
                     view -> {
-                      Log.d(TAG, "Save button clicked");
+                      Log.i(TAG, "Save button clicked");
                       save();
                     });
 
@@ -192,30 +180,21 @@ public final class ImageActivity extends AppCompatActivity {
                 }
               }
             });
+
+    docsService = DocsService.build();
   }
 
   private void save() {
     SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
     String saveLocation = sharedPreferences.getString("saveLocation","");
     if(saveLocation.equals("googleDocs")){
-      requestSignIn();
+      uploadNoteToGoogleDocs();
     }
     else if(saveLocation.equals("appOnly")){
       saveNote(recordText.getText().toString());
     } else {
       Toast.makeText(this, "Error with Save Location", Toast.LENGTH_LONG).show();
     }
-  }
-
-  private void requestSignIn() {
-    GoogleSignInOptions signInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestScopes(new Scope(DocsScopes.DRIVE_FILE),new Scope(DriveScopes.DRIVE_FILE))
-            .build();
-
-    GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-    startActivityForResult(client.getSignInIntent(),400);
   }
 
   @Override
@@ -240,12 +219,6 @@ public final class ImageActivity extends AppCompatActivity {
     if (imageProcessor != null) {
       imageProcessor.stop();
     }
-  }
-
-  @Override
-  public void onBackPressed() {
-    Intent mainIntent = new Intent(ImageActivity.this, MainActivity.class);
-    startActivity(mainIntent);
   }
 
   @Override
@@ -287,9 +260,6 @@ public final class ImageActivity extends AppCompatActivity {
       Log.d(TAG,"Choose Image result received");
       imageUri = data.getData();
       tryReloadAndDetectInImage();
-    } else if (requestCode == 400 && resultCode == RESULT_OK) {
-      Log.d(TAG,"Sign in result received");
-      handleSignInIntent(data);
     } else {
       Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
       super.onActivityResult(requestCode, resultCode, data);
@@ -306,26 +276,6 @@ public final class ImageActivity extends AppCompatActivity {
         Toast.makeText(this, "Can't use camera without camera permission", Toast.LENGTH_LONG).show();
       }
     }
-  }
-
-  private void handleSignInIntent(Intent data) {
-    GoogleSignIn.getSignedInAccountFromIntent(data)
-            .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-              @Override
-              public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                GoogleAccountCredential credential = GoogleAccountCredential
-                        .usingOAuth2(ImageActivity.this,Collections.singleton(DocsScopes.DRIVE_FILE));
-
-                credential.setSelectedAccount(googleSignInAccount.getAccount());
-                onCredentialReceived(credential);
-              }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-              @Override
-              public void onFailure(@NonNull Exception e) {
-
-              }
-            });
   }
 
   private void tryReloadAndDetectInImage() {
@@ -449,7 +399,7 @@ public final class ImageActivity extends AppCompatActivity {
     String username = sharedPreferences.getString("username","");
 
     String title = noteTitle.getText().toString();
-    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, "None");
@@ -468,97 +418,65 @@ public final class ImageActivity extends AppCompatActivity {
     String username = sharedPreferences.getString("username","");
 
     String title = noteTitle.getText().toString();
-    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
     String date = dateFormat.format(new Date());
 
     dbHelper.saveNotes(username, title, recording, date, docId);
 
-    Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
+    runOnUiThread(() -> Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show());
   }
 
-  private void onCredentialReceived(GoogleAccountCredential credential){
-    try{
-      final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-      Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
-              .setApplicationName(APPLICATION_NAME)
-              .build();
-
+  private void uploadNoteToGoogleDocs(){
       Document doc = new Document()
               .setTitle(noteTitle.getText().toString());
 
-      CreateDocTaskParams params = new CreateDocTaskParams(doc, service);
-      new CreateDocTask(ImageActivity.this).execute(params);
+      createGoogleDoc.execute(docsService, doc, executor, createGoogleDocResult -> {
+        // Handle the result on the main thread
+        if (createGoogleDocResult == null) {
+          Log.e(TAG, "Doc creation failed");
+          runOnUiThread(() -> Toast.makeText(ImageActivity.this, "Note Not Saved, Error Creating Google Doc", Toast.LENGTH_SHORT).show());
+        }
+        else {
+          Log.d(TAG,"Created document with title: " + createGoogleDocResult.getTitle());
+          String docId = createGoogleDocResult.getDocumentId();
+          Log.d(TAG,"Document ID: " + docId);
 
-    } catch(IOException e) {
-      Toast.makeText(ImageActivity.this, "Note Not Uploaded", Toast.LENGTH_SHORT).show();
-      Log.e("Exception", "File upload failed: " + e.toString());
-    }
-    catch(GeneralSecurityException e) {
-      Toast.makeText(ImageActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-      Log.e("Exception", "File upload failed: " + e.toString());
-    }
-  }
+          saveNote(recordText.getText().toString(), docId);
 
-  protected static class CreateDocTaskParams {
-    Document doc;
-    Docs service;
-
-    CreateDocTaskParams(Document doc, Docs service) {
-      this.doc = doc;
-      this.service = service;
-    }
-  }
-
-  protected static class UpdateDocTaskParams {
-    Docs service;
-    String docId;
-    BatchUpdateDocumentRequest body;
-
-    UpdateDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body) {
-      this.service = service;
-      this.docId = docId;
-      this.body = body;
-    }
-  }
-
-  public void whenCreateDocTaskIsDone(CreateDocTaskParams params) {
-    Document doc = params.doc;
-    Docs service = params.service;
-    Log.d(TAG,"Created document with title: " + doc.getTitle());
-    String docId = doc.getDocumentId();
-    Log.d(TAG,"Document ID: " + docId);
-
-    saveNote(recordText.getText().toString(), docId);
-
-    List<Request> requests = new ArrayList<>();
-    requests.add(new Request().setInsertText(new InsertTextRequest()
-            .setText(recordText.getText().toString())
-            .setLocation(new Location().setIndex(1))));
+          List<Request> requests = new ArrayList<>();
+          requests.add(new Request().setInsertText(new InsertTextRequest()
+                  .setText(recordText.getText().toString())
+                  .setLocation(new Location().setIndex(1))));
 
 
-    BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
-    UpdateDocTaskParams updateParams = new UpdateDocTaskParams(service,docId,body);
-    new UpdateDocTask(this).execute(updateParams);
-  }
-
-  public void whenUpdateDocTaskIsDone(BatchUpdateDocumentResponse result) {
-    Toast.makeText(ImageActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show();
+          BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
+          updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
+            // Handle the result on the main thread
+            if (updateGoogleDocResult == null) {
+              Log.e(TAG, "Error Adding Text to Google Doc");
+              Toast.makeText(ImageActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
+            }
+            else {
+              runOnUiThread(() -> Toast.makeText(ImageActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show());
+            }
+          });
+        }
+      });
   }
 
   public void whenTextRecognitionTaskIsDone(Text text) {
     List<Text.TextBlock> textBlocks = text.getTextBlocks();
     Log.d(TAG, "There are "+textBlocks.size()+" TextBlocks");
-    String resultText = "";
+    StringBuilder resultText = new StringBuilder();
     for(int i=0; i < textBlocks.size();i++){
       if(i != textBlocks.size()-1) {
         Text.TextBlock textBlock = textBlocks.get(i);
-        resultText = resultText + textBlock.getText() + System.lineSeparator() + System.lineSeparator();
+        resultText.append(textBlock.getText()).append(System.lineSeparator()).append(System.lineSeparator());
       } else {
         Text.TextBlock textBlock = textBlocks.get(i);
-        resultText = resultText + textBlock.getText();
+        resultText.append(textBlock.getText());
       }
     }
-    recordText.setText(resultText);
+    recordText.setText(resultText.toString());
   }
 }

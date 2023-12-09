@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.thomastriplett.capturenotes.R;
-import com.thomastriplett.capturenotes.notes.NotesActivity;
+import com.thomastriplett.capturenotes.activity.NotesActivity;
 
 import java.util.List;
 

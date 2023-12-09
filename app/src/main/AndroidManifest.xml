@@ -14,7 +14,7 @@
         android:roundIcon="@drawable/notes"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
+        <activity android:name=".activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,23 +22,23 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".notes.NotesActivity"
+        <activity android:name=".activity.NotesActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait"/>
-        <activity android:name=".edit.EditActivity"
+        <activity android:name=".activity.EditActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait"/>
         <activity
-            android:name=".image.ImageActivity"
+            android:name=".activity.ImageActivity"
             android:exported="false"
             android:theme="@style/AppTheme">
         </activity>
         <activity
-            android:name=".speech.SpeechActivity"
+            android:name=".activity.SpeechActivity"
             android:exported="false"
             android:theme="@style/AppTheme">
         </activity>
-        <activity android:name=".settings.SettingsActivity"
+        <activity android:name=".activity.SettingsActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait"/>
         <meta-data
