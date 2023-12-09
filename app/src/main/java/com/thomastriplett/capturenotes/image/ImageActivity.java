@@ -41,28 +41,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.annotation.KeepName;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.Docs;
-import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.Document;
 import com.google.api.services.docs.v1.model.InsertTextRequest;
 import com.google.api.services.docs.v1.model.Location;
 import com.google.api.services.docs.v1.model.Request;
-import com.google.api.services.drive.DriveScopes;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.BitmapUtils;
@@ -70,16 +59,20 @@ import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
+import com.thomastriplett.capturenotes.google.docs.CreateGoogleDoc;
+import com.thomastriplett.capturenotes.google.docs.UpdateGoogleDoc;
+import com.thomastriplett.capturenotes.google.services.DocsService;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /** Activity demonstrating different image detector features with a still image from camera. */
 @KeepName
@@ -125,6 +118,11 @@ public final class ImageActivity extends AppCompatActivity {
   private static final String APPLICATION_NAME = "CaptureNotes";
   /** Global instance of the JSON factory. */
   private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+  private Docs docsService;
+  Executor executor = Executors.newSingleThreadExecutor();
+  CreateGoogleDoc createGoogleDoc = new CreateGoogleDoc();
+  UpdateGoogleDoc updateGoogleDoc = new UpdateGoogleDoc();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -193,6 +191,8 @@ public final class ImageActivity extends AppCompatActivity {
                 }
               }
             });
+
+    docsService = DocsService.build();
   }
 
   private void save() {
@@ -434,77 +434,45 @@ public final class ImageActivity extends AppCompatActivity {
 
     dbHelper.saveNotes(username, title, recording, date, docId);
 
-    Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
+    runOnUiThread(() -> Toast.makeText(ImageActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show());
   }
 
   private void uploadNoteToGoogleDocs(){
-    try{
-      final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-      Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-              .setApplicationName(APPLICATION_NAME)
-              .build();
-
       Document doc = new Document()
               .setTitle(noteTitle.getText().toString());
 
-      CreateDocTaskParams params = new CreateDocTaskParams(doc, service);
-      new CreateDocTask(ImageActivity.this).execute(params);
+      createGoogleDoc.execute(docsService, doc, executor, createGoogleDocResult -> {
+        // Handle the result on the main thread
+        if (createGoogleDocResult == null) {
+          Log.e(TAG, "Doc creation failed");
+          runOnUiThread(() -> Toast.makeText(ImageActivity.this, "Note Not Saved, Error Creating Google Doc", Toast.LENGTH_SHORT).show());
+        }
+        else {
+          Log.d(TAG,"Created document with title: " + createGoogleDocResult.getTitle());
+          String docId = createGoogleDocResult.getDocumentId();
+          Log.d(TAG,"Document ID: " + docId);
 
-    } catch(IOException e) {
-      Toast.makeText(ImageActivity.this, "Note Not Uploaded", Toast.LENGTH_SHORT).show();
-      Log.e("Exception", "File upload failed: " + e.toString());
-    }
-    catch(GeneralSecurityException e) {
-      Toast.makeText(ImageActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-      Log.e("Exception", "File upload failed: " + e.toString());
-    }
-  }
+          saveNote(recordText.getText().toString(), docId);
 
-  protected static class CreateDocTaskParams {
-    Document doc;
-    Docs service;
-
-    CreateDocTaskParams(Document doc, Docs service) {
-      this.doc = doc;
-      this.service = service;
-    }
-  }
-
-  protected static class UpdateDocTaskParams {
-    Docs service;
-    String docId;
-    BatchUpdateDocumentRequest body;
-
-    UpdateDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body) {
-      this.service = service;
-      this.docId = docId;
-      this.body = body;
-    }
-  }
-
-  public void whenCreateDocTaskIsDone(CreateDocTaskParams params) {
-    Document doc = params.doc;
-    Docs service = params.service;
-    Log.d(TAG,"Created document with title: " + doc.getTitle());
-    String docId = doc.getDocumentId();
-    Log.d(TAG,"Document ID: " + docId);
-
-    saveNote(recordText.getText().toString(), docId);
-
-    List<Request> requests = new ArrayList<>();
-    requests.add(new Request().setInsertText(new InsertTextRequest()
-            .setText(recordText.getText().toString())
-            .setLocation(new Location().setIndex(1))));
+          List<Request> requests = new ArrayList<>();
+          requests.add(new Request().setInsertText(new InsertTextRequest()
+                  .setText(recordText.getText().toString())
+                  .setLocation(new Location().setIndex(1))));
 
 
-    BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
-    UpdateDocTaskParams updateParams = new UpdateDocTaskParams(service,docId,body);
-    new UpdateDocTask(this).execute(updateParams);
-  }
-
-  public void whenUpdateDocTaskIsDone(BatchUpdateDocumentResponse result) {
-    Toast.makeText(ImageActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show();
+          BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
+          updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
+            // Handle the result on the main thread
+            if (updateGoogleDocResult == null) {
+              Log.e("Exception", "File upload failed");
+              Toast.makeText(ImageActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
+            }
+            else {
+              runOnUiThread(() -> Toast.makeText(ImageActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show());
+            }
+          });
+        }
+      });
   }
 
   public void whenTextRecognitionTaskIsDone(Text text) {
@@ -522,4 +490,17 @@ public final class ImageActivity extends AppCompatActivity {
     }
     recordText.setText(resultText.toString());
   }
+
+//  private void buildGoogleServices() {
+//    try {
+//      final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+//      docsService = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
+//              .setApplicationName(APPLICATION_NAME)
+//              .build();
+//      Log.d(TAG,"Docs service successfully created");
+//    } catch (GeneralSecurityException | IOException e) {
+//      Toast.makeText(ImageActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+//      Log.e(TAG, "Error building Google HTTP Transport: " + e);
+//    }
+//  }
 }

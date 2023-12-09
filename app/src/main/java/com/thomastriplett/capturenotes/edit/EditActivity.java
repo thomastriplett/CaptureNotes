@@ -34,6 +34,11 @@ import com.google.api.services.drive.model.File;
 import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.common.Note;
+import com.thomastriplett.capturenotes.google.docs.CreateGoogleDoc;
+import com.thomastriplett.capturenotes.google.docs.GetGoogleDoc;
+import com.thomastriplett.capturenotes.google.docs.UpdateGoogleDoc;
+import com.thomastriplett.capturenotes.google.services.DocsService;
+import com.thomastriplett.capturenotes.google.services.DriveService;
 import com.thomastriplett.capturenotes.notes.NotesActivity;
 import com.thomastriplett.capturenotes.R;
 
@@ -44,6 +49,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -65,6 +71,11 @@ public class EditActivity extends AppCompatActivity {
     private static final String APPLICATION_NAME = "CaptureNotes";
     /** Global instance of the JSON factory. */
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+
+    Executor executor = Executors.newSingleThreadExecutor();
+    GetGoogleDoc getGoogleDoc = new GetGoogleDoc();
+    CreateGoogleDoc createGoogleDoc = new CreateGoogleDoc();
+    UpdateGoogleDoc updateGoogleDoc = new UpdateGoogleDoc();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,18 +108,19 @@ public class EditActivity extends AppCompatActivity {
             editTitle.setText(note.getTitle());
             originalTitle = note.getTitle();
             docId = note.getDocId();
+        } else {
+            Log.e(TAG, "Note ID was not sent by NotesActivity");
+            showToast("Something went wrong");
         }
 
 
         ActionBar actionBar = getSupportActionBar();
         syncButton = actionBar.getCustomView().findViewById(R.id.sync_button);
 
-        syncButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                syncNoteWithGoogleDocs();
-            }
-        });
+        docsService = DocsService.build();
+        driveService = DriveService.build();
+
+        syncButton.setOnClickListener(v -> syncNoteWithGoogleDocs());
     }
 
     private void save() {
@@ -124,146 +136,70 @@ public class EditActivity extends AppCompatActivity {
         }
     }
 
-    protected static class CreateDocTaskParams {
-        Document doc;
-        Docs service;
-
-        CreateDocTaskParams(Document doc, Docs service) {
-            this.doc = doc;
-            this.service = service;
-        }
-    }
-
-    protected static class UpdateDocTaskParams {
-        Docs service;
-        String docId;
-        BatchUpdateDocumentRequest body;
-
-        UpdateDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body) {
-            this.service = service;
-            this.docId = docId;
-            this.body = body;
-        }
-    }
-
-    protected static class UpdateAndRenameDocTaskParams {
-        Docs service;
-        Drive driveService;
-        String docId;
-        BatchUpdateDocumentRequest body;
-        File file;
-
-        UpdateAndRenameDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body, Drive driveService, File file) {
-            this.service = service;
-            this.docId = docId;
-            this.body = body;
-            this.driveService = driveService;
-            this.file = file;
-        }
-    }
-
-    protected static class GetDocTaskParams {
-        Docs service;
-        String docId;
-
-        GetDocTaskParams(Docs service, String docId) {
-            this.service = service;
-            this.docId = docId;
-        }
-    }
-
     private void uploadNoteToGoogleDocs(){
-        try{
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        if(!docId.equals("None")){
+            getGoogleDoc.execute(docsService, docId, executor, result -> {
+                // Handle the result on the main thread
+                if (result == null) {
+                    Log.e(TAG, "Google Doc not found");
+                    docId = "None";
+                    uploadNoteToGoogleDocs();
+                }
+                else {
+                    updateNoteInGoogleDocs(result);
+                }
+            });
+        }
+        else {
+            Document doc = new Document()
+                    .setTitle(editTitle.getText().toString());
+            createGoogleDoc.execute(docsService, doc, executor, result -> {
+                // Handle the result on the main thread
+                if (result == null) {
+                    Log.e("Exception", "File upload failed");
+                }
+                else {
+                    Log.d(TAG,"Created document with title: " + result.getTitle());
+                    docId = result.getDocumentId();
+                    Log.d(TAG,"Document ID: " + docId);
 
-            docsService = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            Log.d(TAG,"Docs service created");
-            driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            Log.d(TAG,"Drive service created");
+                    List<Request> requests = new ArrayList<>();
+                    requests.add(new Request().setInsertText(new InsertTextRequest()
+                            .setText(editText.getText().toString())
+                            .setLocation(new Location().setIndex(1))));
 
-            if(!docId.equals("None")){
-                EditActivity.GetDocTaskParams getDocParams = new EditActivity.GetDocTaskParams(docsService,docId);
-                Executor executor = Executors.newSingleThreadExecutor();
-                GetEditDocTaskNew getEditDocTaskNew = new GetEditDocTaskNew();
-                getEditDocTaskNew.execute(getDocParams.service, getDocParams.docId, executor, new MyCallback() {
-                    @Override
-                    public void onComplete(Document result) {
+
+                    BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
+                    updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
                         // Handle the result on the main thread
                         if (result == null) {
                             Log.e("Exception", "File upload failed");
-                            docId = "None";
-                            uploadNoteToGoogleDocs();
+                            runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                         }
                         else {
-                            updateNoteInGoogleDocs(result);
+                            runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show());
+                            saveNote();
                         }
-                    }
-                });
-            }
-            else {
-                Document doc = new Document()
-                        .setTitle(editTitle.getText().toString());
-                EditActivity.CreateDocTaskParams params = new EditActivity.CreateDocTaskParams(doc, docsService);
-                new CreateEditDocTask(EditActivity.this).execute(params);
-            }
-
-
-        } catch(IOException e) {
-            Toast.makeText(EditActivity.this, "Note Not Uploaded", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File upload failed: " + e.toString());
-        }
-        catch(GeneralSecurityException e) {
-            Toast.makeText(EditActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File upload failed: " + e.toString());
+                    });
+                }
+            });
         }
     }
 
     private void syncNoteWithGoogleDocs(){
-        try{
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-            docsService = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            Log.d(TAG,"Docs service created");
-            driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            Log.d(TAG,"Drive service created");
-
-            if(!docId.equals("None")){
-                EditActivity.GetDocTaskParams getDocParams = new EditActivity.GetDocTaskParams(docsService,docId);
-                Executor executor = Executors.newSingleThreadExecutor();
-                GetEditDocTaskNew getEditDocTaskNew = new GetEditDocTaskNew();
-                getEditDocTaskNew.execute(getDocParams.service, getDocParams.docId, executor, new MyCallback() {
-                    @Override
-                    public void onComplete(Document result) {
-                        // Handle the result on the main thread
-                        if (result == null) {
-                            runOnUiThread(() -> showToast("Note Not Synced, Google Doc not found"));
-                        }
-                        else {
-                            updateNoteToMatchGoogleDoc(result);
-                        }
-                    }
-                });
-            }
-            else {
-                Toast.makeText(EditActivity.this, "Can't sync this note because it wasn't uploaded to Google Docs", Toast.LENGTH_SHORT).show();
-            }
-
-
-        } catch(IOException e) {
-            Toast.makeText(EditActivity.this, "Note Not Uploaded", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File upload failed: " + e.toString());
+        if(!docId.equals("None")){
+            getGoogleDoc.execute(docsService, docId, executor, result -> {
+                // Handle the result on the main thread
+                if (result == null) {
+                    runOnUiThread(() -> showToast("Note Not Synced, Google Doc not found"));
+                }
+                else {
+                    updateNoteToMatchGoogleDoc(result);
+                }
+            });
         }
-        catch(GeneralSecurityException e) {
-            Toast.makeText(EditActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File upload failed: " + e.toString());
+        else {
+            Toast.makeText(EditActivity.this, "Can't sync this note because it wasn't uploaded to Google Docs", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -294,57 +230,52 @@ public class EditActivity extends AppCompatActivity {
         BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
 
         if(editTitle.getText().toString().equals(originalTitle)) {
-            EditActivity.UpdateDocTaskParams updateParams = new EditActivity.UpdateDocTaskParams(docsService, docId, body);
-            new UpdateEditDocTask(this).execute(updateParams);
+            updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
+                // Handle the result on the main thread
+                if (result == null) {
+                    Log.e("Exception", "File upload failed");
+                    runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
+                }
+                else {
+                    runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show());
+                    saveNote();
+                }
+            });
         }
         else {
             File file = new File();
             file.set("name",editTitle.getText().toString());
-            EditActivity.UpdateAndRenameDocTaskParams updateParams = new EditActivity.UpdateAndRenameDocTaskParams(docsService, docId, body, driveService, file);
-            new UpdateAndRenameDocTask(this).execute(updateParams);
+            updateGoogleDoc.execute(docsService, docId, body, driveService, file, executor, updateGoogleDocResult -> {
+                // Handle the result on the main thread
+                if (result == null) {
+                    Log.e("Exception", "File upload failed");
+                    runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
+                }
+                else {
+                    runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show());
+                    saveNote();
+                }
+            });
         }
     }
 
     public void updateNoteToMatchGoogleDoc(Document result) {
         String title = result.getTitle();
-        String resultText = "";
+        StringBuilder resultText = new StringBuilder();
         List<StructuralElement> contents = result.getBody().getContent();
         for(int i=0; i<contents.size(); i++){
             Paragraph paragraph = contents.get(i).getParagraph();
             if(paragraph != null){
                 List<ParagraphElement> elements = paragraph.getElements();
                 for(int j=0; j<elements.size(); j++){
-                    resultText += elements.get(j).getTextRun().getContent();
+                    resultText.append(elements.get(j).getTextRun().getContent());
                 }
             }
         }
         runOnUiThread(() -> editTitle.setText(title));
-        String finalResultText = resultText;
+        String finalResultText = resultText.toString();
         runOnUiThread(() -> editText.setText(finalResultText));
         runOnUiThread(() -> showToast("Note Synced with Google Docs"));
-    }
-
-    public void whenCreateDocTaskIsDone(EditActivity.CreateDocTaskParams params) {
-        Document doc = params.doc;
-        Docs service = params.service;
-        Log.d(TAG,"Created document with title: " + doc.getTitle());
-        docId = doc.getDocumentId();
-        Log.d(TAG,"Document ID: " + docId);
-
-        List<Request> requests = new ArrayList<>();
-        requests.add(new Request().setInsertText(new InsertTextRequest()
-                .setText(editText.getText().toString())
-                .setLocation(new Location().setIndex(1))));
-
-
-        BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
-        EditActivity.UpdateDocTaskParams updateParams = new EditActivity.UpdateDocTaskParams(service,docId,body);
-        new UpdateEditDocTask(this).execute(updateParams);
-    }
-
-    public void whenUpdateDocTaskIsDone(String resultDocId) {
-        Toast.makeText(EditActivity.this, "Note Saved to Google Docs", Toast.LENGTH_SHORT).show();
-        saveNote(resultDocId);
     }
 
     private void saveNote() {
@@ -359,7 +290,7 @@ public class EditActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         String username = sharedPreferences.getString("username","");
 
-        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
         String date = dateFormat.format(new Date());
 
         if (noteid == -1) {
@@ -368,61 +299,12 @@ public class EditActivity extends AppCompatActivity {
             dbHelper.updateNote(username, date, title, content, docId, originalTitle);
         }
 
-        Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
+        runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show());
 
         Intent intent = new Intent(EditActivity.this, NotesActivity.class);
         startActivity(intent);
     }
 
-    private void saveNote(String docId) {
-        String content = editText.getText().toString();
-        String title = editTitle.getText().toString();
-
-        Context context = getApplicationContext();
-        sqLiteDatabase = context.openOrCreateDatabase("notes",
-                Context.MODE_PRIVATE,null);
-        dbHelper = new DBHelper(sqLiteDatabase);
-
-        SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
-        String username = sharedPreferences.getString("username","");
-
-        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
-        String date = dateFormat.format(new Date());
-
-        if (noteid == -1) {
-            dbHelper.saveNotes(username, title, content, date, docId);
-        } else  {
-            dbHelper.updateNote(username, date, title, content, docId, originalTitle);
-        }
-
-        Toast.makeText(EditActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
-
-        Intent intent = new Intent(EditActivity.this, NotesActivity.class);
-        startActivity(intent);
-    }
-
-    private static class GetEditDocTaskNew {
-
-        void execute(Docs service, String docId, Executor executor, MyCallback callback) {
-            executor.execute(() -> {
-                // Perform background operation here
-                Document response = null;
-                try {
-                    response = service.documents().get(docId).execute();
-                } catch (Exception e) {
-                    Log.e("Exception","Error in doInBackground: "+e.toString());
-                }
-
-                // Invoke the callback on the main thread
-                callback.onComplete(response);
-            });
-        }
-    }
-
-    private interface MyCallback {
-        void onComplete(Document result);
-
-    }
     private void showToast(String message) {
         Toast.makeText(EditActivity.this, message, Toast.LENGTH_SHORT).show();
     }
