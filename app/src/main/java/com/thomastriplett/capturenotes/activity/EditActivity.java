@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes.edit;
+package com.thomastriplett.capturenotes.activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,10 +14,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.DeleteContentRangeRequest;
@@ -31,7 +27,6 @@ import com.google.api.services.docs.v1.model.Request;
 import com.google.api.services.docs.v1.model.StructuralElement;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
-import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.common.Note;
 import com.thomastriplett.capturenotes.google.docs.CreateGoogleDoc;
@@ -39,11 +34,8 @@ import com.thomastriplett.capturenotes.google.docs.GetGoogleDoc;
 import com.thomastriplett.capturenotes.google.docs.UpdateGoogleDoc;
 import com.thomastriplett.capturenotes.google.services.DocsService;
 import com.thomastriplett.capturenotes.google.services.DriveService;
-import com.thomastriplett.capturenotes.notes.NotesActivity;
 import com.thomastriplett.capturenotes.R;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,11 +58,6 @@ public class EditActivity extends AppCompatActivity {
     private Docs docsService;
     private Drive driveService;
     private ImageButton syncButton;
-
-    /** Application name. */
-    private static final String APPLICATION_NAME = "CaptureNotes";
-    /** Global instance of the JSON factory. */
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     Executor executor = Executors.newSingleThreadExecutor();
     GetGoogleDoc getGoogleDoc = new GetGoogleDoc();
@@ -156,7 +143,7 @@ public class EditActivity extends AppCompatActivity {
             createGoogleDoc.execute(docsService, doc, executor, result -> {
                 // Handle the result on the main thread
                 if (result == null) {
-                    Log.e("Exception", "File upload failed");
+                    Log.e(TAG, "Error Creating Google Doc");
                 }
                 else {
                     Log.d(TAG,"Created document with title: " + result.getTitle());
@@ -173,7 +160,7 @@ public class EditActivity extends AppCompatActivity {
                     updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
                         // Handle the result on the main thread
                         if (result == null) {
-                            Log.e("Exception", "File upload failed");
+                            Log.e(TAG, "Error Adding Text to Google Doc");
                             runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                         }
                         else {
@@ -233,7 +220,7 @@ public class EditActivity extends AppCompatActivity {
             updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
                 // Handle the result on the main thread
                 if (result == null) {
-                    Log.e("Exception", "File upload failed");
+                    Log.e(TAG, "Error Adding Text to Google Doc");
                     runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                 }
                 else {
@@ -248,7 +235,7 @@ public class EditActivity extends AppCompatActivity {
             updateGoogleDoc.execute(docsService, docId, body, driveService, file, executor, updateGoogleDocResult -> {
                 // Handle the result on the main thread
                 if (result == null) {
-                    Log.e("Exception", "File upload failed");
+                    Log.e(TAG, "Error Adding Text to Google Doc");
                     runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                 }
                 else {

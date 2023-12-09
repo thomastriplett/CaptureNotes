@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes.speech;
+package com.thomastriplett.capturenotes.activity;
 
 import android.Manifest;
 import android.content.Context;
@@ -17,35 +17,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.services.docs.v1.Docs;
-import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
-import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.Document;
 import com.google.api.services.docs.v1.model.InsertTextRequest;
 import com.google.api.services.docs.v1.model.Location;
 import com.google.api.services.docs.v1.model.Request;
-import com.google.api.services.drive.DriveScopes;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v1.RecognitionAudio;
@@ -55,27 +38,28 @@ import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
 import com.google.cloud.speech.v1.SpeechSettings;
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
-import com.thomastriplett.capturenotes.MainActivity;
 import com.thomastriplett.capturenotes.R;
+import com.thomastriplett.capturenotes.google.cloudstorage.UploadFile;
+import com.thomastriplett.capturenotes.google.docs.CreateGoogleDoc;
+import com.thomastriplett.capturenotes.google.docs.UpdateGoogleDoc;
+import com.thomastriplett.capturenotes.google.services.DocsService;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static android.Manifest.permission.RECORD_AUDIO;
 
@@ -95,11 +79,11 @@ public class SpeechActivity extends AppCompatActivity{
     DBHelper dbHelper;
     SQLiteDatabase sqLiteDatabase;
     String objectName;
-
-    /** Application name. */
-    private static final String APPLICATION_NAME = "CaptureNotes";
-    /** Global instance of the JSON factory. */
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private Docs docsService;
+    Executor executor = Executors.newSingleThreadExecutor();
+    CreateGoogleDoc createGoogleDoc = new CreateGoogleDoc();
+    UpdateGoogleDoc updateGoogleDoc = new UpdateGoogleDoc();
+    UploadFile uploadFile = new UploadFile();
 
     String projectId = "capturenotes";
     boolean recorderActive = false;
@@ -151,6 +135,8 @@ public class SpeechActivity extends AppCompatActivity{
                 save();
             }
         });
+
+        docsService = DocsService.build();
     }
 
     private void startRecording() {
@@ -170,7 +156,7 @@ public class SpeechActivity extends AppCompatActivity{
             try {
                 recorder.prepare();
             } catch (IOException e) {
-                Log.e("TAG", "prepare() failed");
+                Log.e(TAG, "prepare() failed");
             }
 
             recorder.start();
@@ -238,19 +224,6 @@ public class SpeechActivity extends AppCompatActivity{
         }
     }
 
-    protected static class SendAudioTaskParams {
-        Storage storage;
-        BlobInfo blobInfo;
-        String filePath;
-
-        SendAudioTaskParams(Storage storage, BlobInfo blobInfo, String filePath) {
-            this.storage = storage;
-            this.blobInfo = blobInfo;
-            this.filePath = filePath;
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
     private void sendAudioToGoogleCloud() {
         Log.d(TAG, "credentials: "+credentials);
         Storage storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(credentials).build().getService();
@@ -263,42 +236,43 @@ public class SpeechActivity extends AppCompatActivity{
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
         String filePath = fileName;
 
-        SpeechActivity.SendAudioTaskParams params = new SpeechActivity.SendAudioTaskParams(storage, blobInfo, filePath);
-        new SendAudioTask(SpeechActivity.this).execute(params);
-        Log.d(TAG, "File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
-    }
+        uploadFile.execute(storage, blobInfo, filePath, executor, uploadFileResult -> {
+            if (uploadFileResult == null) {
+                Log.e(TAG, "Error Uploading Audio Recording File to Google Cloud Storage");
+                runOnUiThread(() -> Toast.makeText(SpeechActivity.this, "Error converting recorded speech to text", Toast.LENGTH_SHORT).show());
+            } else {
+                Log.i(TAG, "File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
+                try {
+                    SpeechSettings speechSettings = SpeechSettings.newBuilder()
+                            .setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();
 
-    public void whenSendAudioTaskIsDone(Blob blob) {
-        Log.d(TAG,"In whenSendAudioTaskIsDone");
-        try {
-            SpeechSettings speechSettings = SpeechSettings.newBuilder()
-                    .setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();
-
-            SpeechClient speechClient = SpeechClient.create(speechSettings);
-            RecognitionConfig.AudioEncoding encoding = RecognitionConfig.AudioEncoding.AMR_WB;
-            int sampleRateHertz = 16000;
-            String languageCode = "en-US";
-            RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(encoding)
-                    .setSampleRateHertz(sampleRateHertz)
-                    .setLanguageCode(languageCode)
-                    .build();
-            String uri = "gs://capturenotes-audio-storage/"+objectName;
-            RecognitionAudio audio = RecognitionAudio.newBuilder()
-                    .setUri(uri)
-                    .build();
-            RecognizeResponse response = speechClient.recognize(config, audio);
-            List<SpeechRecognitionResult> results = response.getResultsList();
-            Log.d(TAG,"Number of results = "+results.size());
-            for (SpeechRecognitionResult result : results) {
-                SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-                recordText.setText(alternative.getTranscript());
+                    SpeechClient speechClient = SpeechClient.create(speechSettings);
+                    RecognitionConfig.AudioEncoding encoding = RecognitionConfig.AudioEncoding.AMR_WB;
+                    int sampleRateHertz = 16000;
+                    String languageCode = "en-US";
+                    RecognitionConfig config = RecognitionConfig.newBuilder()
+                            .setEncoding(encoding)
+                            .setSampleRateHertz(sampleRateHertz)
+                            .setLanguageCode(languageCode)
+                            .build();
+                    String uri = "gs://capturenotes-audio-storage/"+objectName;
+                    RecognitionAudio audio = RecognitionAudio.newBuilder()
+                            .setUri(uri)
+                            .build();
+                    RecognizeResponse response = speechClient.recognize(config, audio);
+                    List<SpeechRecognitionResult> results = response.getResultsList();
+                    Log.d(TAG,"Number of results = "+results.size());
+                    for (SpeechRecognitionResult result : results) {
+                        SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
+                        recordText.setText(alternative.getTranscript());
+                    }
+                    speechClient.shutdown();
+                }
+                catch (IOException e) {
+                    Log.e("Exception", "Audio recording failed: " + e.toString());
+                }
             }
-            speechClient.shutdown();
-        }
-        catch (IOException e) {
-            Log.e("Exception", "Audio recording failed: " + e.toString());
-        }
+        });
     }
 
     private void saveNote(String recording) {
@@ -336,83 +310,48 @@ public class SpeechActivity extends AppCompatActivity{
 
         dbHelper.saveNotes(username, title, recording, date, docId);
 
-        Toast.makeText(SpeechActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show();
+        runOnUiThread(() -> Toast.makeText(SpeechActivity.this, "Note Saved in App", Toast.LENGTH_SHORT).show());
     }
 
     private void uploadNoteToGoogleDocs(){
-        try{
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Document doc = new Document()
+                .setTitle(noteTitle.getText().toString());
+        createGoogleDoc.execute(docsService, doc, executor, createGoogleDocResult -> {
+            // Handle the result on the main thread
+            if (createGoogleDocResult == null) {
+                Log.e(TAG, "Doc creation failed");
+                runOnUiThread(() -> Toast.makeText(SpeechActivity.this, "Note Not Saved, Error Creating Google Doc", Toast.LENGTH_SHORT).show());
+            }
+            else {
+                Log.i(TAG,"Created document with title: " + createGoogleDocResult.getTitle());
+                String docId = createGoogleDocResult.getDocumentId();
+                Log.i(TAG,"Document ID: " + docId);
 
-            Docs service = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
+                saveNote(recordText.getText().toString(), docId);
 
-            Document doc = new Document()
-                    .setTitle(noteTitle.getText().toString());
-
-            SpeechActivity.CreateDocTaskParams params = new SpeechActivity.CreateDocTaskParams(doc, service);
-            new CreateSpeechDocTask(SpeechActivity.this).execute(params);
-
-        } catch(IOException e) {
-            Toast.makeText(SpeechActivity.this, "Note Not Uploaded", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File upload failed: " + e.toString());
-        }
-        catch(GeneralSecurityException e) {
-            Toast.makeText(SpeechActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File upload failed: " + e.toString());
-        }
-    }
-
-    protected static class CreateDocTaskParams {
-        Document doc;
-        Docs service;
-
-        CreateDocTaskParams(Document doc, Docs service) {
-            this.doc = doc;
-            this.service = service;
-        }
-    }
-
-    protected static class UpdateDocTaskParams {
-        Docs service;
-        String docId;
-        BatchUpdateDocumentRequest body;
-
-        UpdateDocTaskParams(Docs service, String docId, BatchUpdateDocumentRequest body) {
-            this.service = service;
-            this.docId = docId;
-            this.body = body;
-        }
-    }
+                List<Request> requests = new ArrayList<>();
+                requests.add(new Request().setInsertText(new InsertTextRequest()
+                        .setText(recordText.getText().toString())
+                        .setLocation(new Location().setIndex(1))));
 
 
-    public void whenCreateDocTaskIsDone(CreateDocTaskParams params) {
-        Document doc = params.doc;
-        Docs service = params.service;
-        Log.d(TAG,"Created document with title: " + doc.getTitle());
-        String docId = doc.getDocumentId();
-        Log.d(TAG,"Document ID: " + docId);
-
-        saveNote(recordText.getText().toString(), docId);
-
-        List<Request> requests = new ArrayList<>();
-        requests.add(new Request().setInsertText(new InsertTextRequest()
-                .setText(recordText.getText().toString())
-                .setLocation(new Location().setIndex(1))));
-
-
-        BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
-        SpeechActivity.UpdateDocTaskParams updateParams = new SpeechActivity.UpdateDocTaskParams(service,docId,body);
-        new UpdateSpeechDocTask(this).execute(updateParams);
-    }
-
-
-    public void whenUpdateDocTaskIsDone(BatchUpdateDocumentResponse result) {
-        Toast.makeText(SpeechActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show();
+                BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
+                updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
+                    // Handle the result on the main thread
+                    if (updateGoogleDocResult == null) {
+                        Log.e(TAG, "Error Adding Text to Google Doc");
+                        runOnUiThread(() -> Toast.makeText(SpeechActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
+                    }
+                    else {
+                        runOnUiThread(() -> Toast.makeText(SpeechActivity.this, "Note uploaded to Google Docs", Toast.LENGTH_SHORT).show());
+                    }
+                });
+            }
+        });
     }
 
     private void save() {
-        Log.d(TAG,"In save");
+        Log.i(TAG,"In save");
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
         String saveLocation = sharedPreferences.getString("saveLocation","");
         if(saveLocation.equals("googleDocs")){

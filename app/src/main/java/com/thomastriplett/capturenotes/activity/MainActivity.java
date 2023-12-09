@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes;
+package com.thomastriplett.capturenotes.activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -24,11 +24,9 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.drive.DriveScopes;
+import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.common.AuthManager;
-import com.thomastriplett.capturenotes.image.ImageActivity;
-import com.thomastriplett.capturenotes.notes.NotesActivity;
-import com.thomastriplett.capturenotes.settings.SettingsActivity;
-import com.thomastriplett.capturenotes.speech.SpeechActivity;
+
 import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {

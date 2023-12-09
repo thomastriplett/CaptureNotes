@@ -1,4 +1,4 @@
-package com.thomastriplett.capturenotes.notes;
+package com.thomastriplett.capturenotes.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -19,23 +19,18 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
-import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
-import com.thomastriplett.capturenotes.MainActivity;
 import com.thomastriplett.capturenotes.common.Note;
 import com.thomastriplett.capturenotes.common.NoteAdapter;
 import com.thomastriplett.capturenotes.R;
-import com.thomastriplett.capturenotes.edit.EditActivity;
+import com.thomastriplett.capturenotes.google.docs.DeleteGoogleDoc;
+import com.thomastriplett.capturenotes.google.services.DriveService;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class NotesActivity extends AppCompatActivity implements View.OnClickListener, View.OnLongClickListener {
 
@@ -48,11 +43,9 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     String docId;
     private RecyclerView recyclerView;
     private final String TAG = "In NotesActivity";
-
-    /** Application name. */
-    private static final String APPLICATION_NAME = "CaptureNotes";
-    /** Global instance of the JSON factory. */
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private Drive driveService;
+    Executor executor = Executors.newSingleThreadExecutor();
+    DeleteGoogleDoc deleteGoogleDoc = new DeleteGoogleDoc();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +95,8 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
                 finish();
             }
         });
+
+        driveService = DriveService.build();
     }
 
     @Override
@@ -118,18 +113,18 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     public boolean onLongClick(View v) {
         int pos = recyclerView.getChildLayoutPosition(v);
         Log.i(TAG, "Note in position "+pos+" long clicked");
-        final Note n = notes.get(pos);
-        docId = n.getDocId();
+        final Note note = notes.get(pos);
+        docId = note.getDocId();
         AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustom);
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                if (!n.getDocId().equals("None")){
-                    deleteNote(n, i);
+                if (note.getDocId() != null && !note.getDocId().equals("None")){
+                    deleteNote(note, i);
                     createGoogleDocsDeletionToast();
                 }
                 else {
-                    deleteNote(n, i);
+                    deleteNote(note, i);
                 }
             }
         });
@@ -174,43 +169,20 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
         dbHelper = new DBHelper(sqLiteDatabase);
         dbHelper.deleteNote(username,n.getTitle());
         Log.d(TAG,"Removing "+i+" item from adapter");
+        Toast.makeText(NotesActivity.this, "Note deleted", Toast.LENGTH_SHORT).show();
         adapter.notifyDataSetChanged();
     }
 
     private void uploadNoteToGoogleDocs(){
-        try{
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-
-            Drive driveService = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            Log.d(TAG,"Drive service created");
-
-            NotesActivity.DeleteDocTaskParams updateParams = new NotesActivity.DeleteDocTaskParams(docId, driveService);
-            new DeleteDocTask(this).execute(updateParams);
-
-
-        } catch(IOException e) {
-            Toast.makeText(NotesActivity.this, "Google docs copy not deleted", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File deletion failed: " + e.toString());
-        }
-        catch(GeneralSecurityException e) {
-            Toast.makeText(NotesActivity.this, "Security Issue", Toast.LENGTH_SHORT).show();
-            Log.e("Exception", "File deletion failed: " + e.toString());
-        }
-    }
-
-    public void whenDeleteDocTaskIsDone(String result) {
-        Toast.makeText(NotesActivity.this, "Google Docs copy deleted", Toast.LENGTH_SHORT).show();
-    }
-
-    protected static class DeleteDocTaskParams {
-        Drive driveService;
-        String docId;
-
-        DeleteDocTaskParams(String docId, Drive driveService) {
-            this.docId = docId;
-            this.driveService = driveService;
-        }
+        deleteGoogleDoc.execute(driveService, docId, executor, result -> {
+            // Handle the result on the main thread
+            if (!result) {
+                Log.e(TAG, "Error Deleting Google Doc");
+                runOnUiThread(() -> Toast.makeText(NotesActivity.this, "Error Deleting Note from Google Doc", Toast.LENGTH_SHORT).show());
+            }
+            else {
+                runOnUiThread(() -> Toast.makeText(NotesActivity.this, "Google Docs copy deleted", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 }

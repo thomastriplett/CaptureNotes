@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.thomastriplett.capturenotes.image;
+package com.thomastriplett.capturenotes.activity;
 
 import static java.lang.Math.max;
 
@@ -42,10 +42,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.common.annotation.KeepName;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.Document;
@@ -55,7 +51,6 @@ import com.google.api.services.docs.v1.model.Request;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.thomastriplett.capturenotes.camera.BitmapUtils;
-import com.thomastriplett.capturenotes.common.AuthManager;
 import com.thomastriplett.capturenotes.common.DBHelper;
 import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.camera.GraphicOverlay;
@@ -64,7 +59,6 @@ import com.thomastriplett.capturenotes.google.docs.UpdateGoogleDoc;
 import com.thomastriplett.capturenotes.google.services.DocsService;
 import com.thomastriplett.capturenotes.textdetector.TextRecognitionProcessor;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -113,11 +107,6 @@ public final class ImageActivity extends AppCompatActivity {
 
   DBHelper dbHelper;
   SQLiteDatabase sqLiteDatabase;
-
-  /** Application name. */
-  private static final String APPLICATION_NAME = "CaptureNotes";
-  /** Global instance of the JSON factory. */
-  private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
   private Docs docsService;
   Executor executor = Executors.newSingleThreadExecutor();
@@ -464,7 +453,7 @@ public final class ImageActivity extends AppCompatActivity {
           updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
             // Handle the result on the main thread
             if (updateGoogleDocResult == null) {
-              Log.e("Exception", "File upload failed");
+              Log.e(TAG, "Error Adding Text to Google Doc");
               Toast.makeText(ImageActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show();
             }
             else {
@@ -490,17 +479,4 @@ public final class ImageActivity extends AppCompatActivity {
     }
     recordText.setText(resultText.toString());
   }
-
-//  private void buildGoogleServices() {
-//    try {
-//      final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-//      docsService = new Docs.Builder(HTTP_TRANSPORT, JSON_FACTORY, AuthManager.getInstance().getUserCredential())
-//              .setApplicationName(APPLICATION_NAME)
-//              .build();
-//      Log.d(TAG,"Docs service successfully created");
-//    } catch (GeneralSecurityException | IOException e) {
-//      Toast.makeText(ImageActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
-//      Log.e(TAG, "Error building Google HTTP Transport: " + e);
-//    }
-//  }
 }
