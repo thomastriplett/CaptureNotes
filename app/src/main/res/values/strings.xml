@@ -34,4 +34,9 @@
     <string name="app_version_header">App Version:</string>
     <string name="privacy_policy_header">Privacy Policy</string>
     <string name="support_header">Support</string>
+    <string name="audio_button_description">A picture of a microphone</string>
+    <string name="image_button_description">A picture of a camera.</string>
+    <string name="notes_button_description">A picture of a note.</string>
+    <string name="notes_list_row_date_hint">Date Goes Here</string>
+    <string name="notes_list_row_title_hint">Title Goes Here</string>
 </resources>

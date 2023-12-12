@@ -19,6 +19,8 @@ package com.thomastriplett.capturenotes.activity;
 import static java.lang.Math.max;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +38,9 @@ import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -65,6 +70,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -85,12 +91,7 @@ public final class ImageActivity extends AppCompatActivity {
 
   private static final String KEY_IMAGE_URI = "com.google.mlkit.vision.demo.KEY_IMAGE_URI";
   private static final String KEY_SELECTED_SIZE = "com.google.mlkit.vision.demo.KEY_SELECTED_SIZE";
-
-  private static final int REQUEST_IMAGE_CAPTURE = 1001;
-  private static final int REQUEST_CHOOSE_IMAGE = 1002;
   private static final int REQUEST_CAMERA_PERMISSION = 1003;
-  private static final int REQUEST_STORAGE_PERMISSION = 1004;
-
   private GraphicOverlay graphicOverlay;
   private String selectedMode = OBJECT_DETECTION;
   private String selectedSize = SIZE_SCREEN;
@@ -112,13 +113,15 @@ public final class ImageActivity extends AppCompatActivity {
   Executor executor = Executors.newSingleThreadExecutor();
   CreateGoogleDoc createGoogleDoc = new CreateGoogleDoc();
   UpdateGoogleDoc updateGoogleDoc = new UpdateGoogleDoc();
+  ActivityResultLauncher<Intent> takePictureActivityResultLauncher;
+  ActivityResultLauncher<Intent> chooseImageActivityResultLauncher;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
     setContentView(R.layout.activity_image);
-    getSupportActionBar().setIcon(R.drawable.notes);
+    Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
     getSupportActionBar().setDisplayShowHomeEnabled(true);
 
     recordText = (TextView) findViewById(R.id.image_record_text);
@@ -182,6 +185,27 @@ public final class ImageActivity extends AppCompatActivity {
             });
 
     docsService = DocsService.build();
+
+    takePictureActivityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+              if (result.getResultCode() == Activity.RESULT_OK) {
+                Log.d(TAG,"Capture Image result received");
+                tryReloadAndDetectInImage();
+            }
+  });
+
+    chooseImageActivityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+              if (result.getResultCode() == Activity.RESULT_OK) {
+                Log.d(TAG,"Choose Image result received");
+                Intent data = result.getData();
+                assert data != null;
+                imageUri = data.getData();
+                tryReloadAndDetectInImage();
+              }
+            });
   }
 
   private void save() {
@@ -222,7 +246,7 @@ public final class ImageActivity extends AppCompatActivity {
   }
 
   @Override
-  public void onSaveInstanceState(Bundle outState) {
+  public void onSaveInstanceState(@NonNull Bundle outState) {
     super.onSaveInstanceState(outState);
     outState.putParcelable(KEY_IMAGE_URI, imageUri);
     outState.putString(KEY_SELECTED_SIZE, selectedSize);
@@ -233,13 +257,15 @@ public final class ImageActivity extends AppCompatActivity {
     imageUri = null;
 
     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+    try {
       ContentValues values = new ContentValues();
       values.put(MediaStore.Images.Media.TITLE, "New Picture");
       values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
       imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
       takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-      startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+      takePictureActivityResultLauncher.launch(takePictureIntent);
+    } catch (ActivityNotFoundException e) {
+      Log.e(TAG, "Take Picture Activity Not Found");
     }
   }
 
@@ -247,23 +273,7 @@ public final class ImageActivity extends AppCompatActivity {
     Intent intent = new Intent();
     intent.setType("image/*");
     intent.setAction(Intent.ACTION_GET_CONTENT);
-    startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
-  }
-
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-      Log.d(TAG,"Capture Image result received");
-      tryReloadAndDetectInImage();
-    } else if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {
-      // In this case, imageUri is returned by the chooser, save it.
-      Log.d(TAG,"Choose Image result received");
-      imageUri = data.getData();
-      tryReloadAndDetectInImage();
-    } else {
-      Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
-      super.onActivityResult(requestCode, resultCode, data);
-    }
+    chooseImageActivityResultLauncher.launch(Intent.createChooser(intent, "Select Picture"));
   }
 
   @Override
@@ -367,16 +377,14 @@ public final class ImageActivity extends AppCompatActivity {
       imageProcessor.stop();
     }
     try {
-      switch (selectedMode) {
-        case TEXT_RECOGNITION_LATIN:
-          if (imageProcessor != null) {
-            imageProcessor.stop();
-          }
-          imageProcessor =
-              new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), ImageActivity.this);
-          break;
-        default:
-          Log.e(TAG, "Unknown selectedMode: " + selectedMode);
+      if (selectedMode.equals(TEXT_RECOGNITION_LATIN)) {
+        if (imageProcessor != null) {
+          imageProcessor.stop();
+        }
+        imageProcessor =
+                new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), ImageActivity.this);
+      } else {
+        Log.e(TAG, "Unknown selectedMode: " + selectedMode);
       }
     } catch (Exception e) {
       Log.e(TAG, "Can not create image processor: " + selectedMode, e);

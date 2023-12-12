@@ -10,45 +10,35 @@
     <TextView
         android:id="@+id/notesListRowTitle"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:fontFamily="casual"
         android:gravity="center"
-        android:text="Title Goes Here"
+        android:paddingTop="8dp"
+        android:text="@string/notes_list_row_title_hint"
         android:textAlignment="center"
         android:textColor="@android:color/black"
         android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/notesListRowGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/notesListRowGuideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_begin="45dp" />
-
     <TextView
         android:id="@+id/notesListRowDate"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:fontFamily="sans-serif-light"
         android:gravity="center|top"
-        android:text="Date Goes Here"
+        android:paddingBottom="8dp"
+        android:text="@string/notes_list_row_date_hint"
         android:textAlignment="center"
         android:textColor="@android:color/black"
         android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/notesListRowGuideline2"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/notesListRowGuideline" />
+        app:layout_constraintTop_toBottomOf="@id/notesListRowTitle" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/notesListRowGuideline2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_begin="90dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

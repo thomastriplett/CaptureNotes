@@ -1,9 +1,11 @@
 package com.thomastriplett.capturenotes.activity;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -11,16 +13,14 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.drive.DriveScopes;
@@ -28,18 +28,23 @@ import com.thomastriplett.capturenotes.R;
 import com.thomastriplett.capturenotes.common.AuthManager;
 
 import java.util.Collections;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "In MainActivity";
+
+    ActivityResultLauncher<Intent> signInActivityResultLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getSupportActionBar().setIcon(R.drawable.notes);
+        ViewGroup mainLayout = findViewById(R.id.mainActivityLayout);
+        Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setDisplayOptions(getSupportActionBar().DISPLAY_SHOW_CUSTOM);
-        View cView = getLayoutInflater().inflate(R.layout.activity_main_action_bar, null);
+        getSupportActionBar();
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        View cView = getLayoutInflater().inflate(R.layout.activity_main_action_bar, mainLayout, false);
         getSupportActionBar().setCustomView(cView);
 
         ImageView notesButton = findViewById(R.id.notes_button);
@@ -49,42 +54,28 @@ public class MainActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         ImageButton settingsButton = actionBar.getCustomView().findViewById(R.id.settings_button);
 
-        requestSignIn();
-
-        notesButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "Notes Button Clicked");
-                Intent notesIntent = new Intent(MainActivity.this, NotesActivity.class);
-                startActivity(notesIntent);
-            }
+        notesButton.setOnClickListener(v -> {
+            Log.i(TAG, "Notes Button Clicked");
+            Intent notesIntent = new Intent(MainActivity.this, NotesActivity.class);
+            startActivity(notesIntent);
         });
 
-        imageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "Image Button Clicked");
-                Intent imageIntent = new Intent(MainActivity.this, ImageActivity.class);
-                startActivity(imageIntent);
-            }
+        imageButton.setOnClickListener(v -> {
+            Log.i(TAG, "Image Button Clicked");
+            Intent imageIntent = new Intent(MainActivity.this, ImageActivity.class);
+            startActivity(imageIntent);
         });
 
-        audioButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "Audio Button Clicked");
-                Intent imageIntent = new Intent(MainActivity.this, SpeechActivity.class);
-                startActivity(imageIntent);
-            }
+        audioButton.setOnClickListener(v -> {
+            Log.i(TAG, "Audio Button Clicked");
+            Intent imageIntent = new Intent(MainActivity.this, SpeechActivity.class);
+            startActivity(imageIntent);
         });
 
-        settingsButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.i(TAG, "Settings Button Clicked");
-                Intent intent2 = new Intent(MainActivity.this, SettingsActivity.class);
-                startActivity(intent2);
-            }
+        settingsButton.setOnClickListener(v -> {
+            Log.i(TAG, "Settings Button Clicked");
+            Intent intent2 = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent2);
         });
 
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
@@ -95,6 +86,22 @@ public class MainActivity extends AppCompatActivity {
             editor.putString("saveLocation", "googleDocs");
             editor.apply();
         }
+
+        signInActivityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Log.d(TAG,"Sign in result received");
+                        Intent data = result.getData();
+                        handleSignInIntent(data);
+                    } else {
+                        Log.d(TAG, "Sign in result received with bad result code");
+                        Intent data = result.getData();
+                        handleSignInIntent(data);
+                    }
+                });
+
+        requestSignIn();
     }
 
     private void requestSignIn() {
@@ -104,38 +111,18 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         GoogleSignInClient client = GoogleSignIn.getClient(this,signInOptions);
-
-        startActivityForResult(client.getSignInIntent(),400);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 400 && resultCode == RESULT_OK) {
-            Log.d(TAG,"Sign in result received");
-            handleSignInIntent(data);
-        } else {
-            Log.d(TAG,"Unknown result received, requestCode = "+requestCode);
-            super.onActivityResult(requestCode, resultCode, data);
-        }
+        signInActivityResultLauncher.launch(client.getSignInIntent());
     }
 
     private void handleSignInIntent(Intent data) {
         GoogleSignIn.getSignedInAccountFromIntent(data)
-                .addOnSuccessListener(new OnSuccessListener<GoogleSignInAccount>() {
-                    @Override
-                    public void onSuccess(GoogleSignInAccount googleSignInAccount) {
-                        GoogleAccountCredential credential = GoogleAccountCredential
-                                .usingOAuth2(MainActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
+                .addOnSuccessListener(googleSignInAccount -> {
+                    GoogleAccountCredential credential = GoogleAccountCredential
+                            .usingOAuth2(MainActivity.this, Collections.singleton(DocsScopes.DRIVE_FILE));
 
-                        credential.setSelectedAccount(googleSignInAccount.getAccount());
-                        AuthManager.getInstance().setUserCredential(credential);
-                    }
+                    credential.setSelectedAccount(googleSignInAccount.getAccount());
+                    AuthManager.getInstance().setUserCredential(credential);
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("GoogleSignIn", "Sign-in failed.", e);
-                    }
-                });
+                .addOnFailureListener(e -> Log.e("GoogleSignIn", "Sign-in failed.", e));
     }
 }

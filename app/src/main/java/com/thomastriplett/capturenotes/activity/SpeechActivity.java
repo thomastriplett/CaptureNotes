@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.os.Bundle;
 
 import android.util.Log;
@@ -17,7 +16,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -58,15 +58,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import static android.Manifest.permission.RECORD_AUDIO;
 
 public class SpeechActivity extends AppCompatActivity{
-    private ImageView recordButton;
-    private ImageView stopButton;
-    private ImageView saveButton;
     private TextView recordText;
     private TextView noteTitle;
 
@@ -94,12 +92,12 @@ public class SpeechActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_speech);
-        getSupportActionBar().setIcon(R.drawable.notes);
+        Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        recordButton = findViewById(R.id.record_button);
-        stopButton = findViewById(R.id.stop_button);
-        saveButton = findViewById(R.id.recording_save_button);
+        ImageView recordButton = findViewById(R.id.record_button);
+        ImageView stopButton = findViewById(R.id.stop_button);
+        ImageView saveButton = findViewById(R.id.recording_save_button);
         recordText = findViewById(R.id.record_text);
         noteTitle = findViewById(R.id.note_title);
 
@@ -117,7 +115,6 @@ public class SpeechActivity extends AppCompatActivity{
         });
 
         stopButton.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View v) {
                 if (recorderActive) {
@@ -133,6 +130,17 @@ public class SpeechActivity extends AppCompatActivity{
             @Override
             public void onClick(View v) {
                 save();
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (recorderActive) {
+                    stopRecording();
+                }
+                Intent mainIntent = new Intent(SpeechActivity.this, MainActivity.class);
+                startActivity(mainIntent);
             }
         });
 
@@ -176,17 +184,7 @@ public class SpeechActivity extends AppCompatActivity{
     }
 
     @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        if (recorderActive) {
-            stopRecording();
-        }
-        Intent mainIntent = new Intent(SpeechActivity.this, MainActivity.class);
-        startActivity(mainIntent);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         // this method is called when user will
         // grant the permission for audio recording.
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -215,8 +213,6 @@ public class SpeechActivity extends AppCompatActivity{
         try {
             AssetManager assetManager = SpeechActivity.this.getAssets();
             InputStream jsonStream = assetManager.open("credentials.json");
-            ArrayList<String> urlList = new ArrayList<>();
-            urlList.add("https://www.googleapis.com/auth/cloud-platform");
             credentials = GoogleCredentials.fromStream(jsonStream);
         }
         catch (IOException e) {
@@ -286,7 +282,7 @@ public class SpeechActivity extends AppCompatActivity{
         String username = sharedPreferences.getString("username","");
 
         String title = noteTitle.getText().toString();
-        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
         String date = dateFormat.format(new Date());
 
         dbHelper.saveNotes(username, title, recording, date, "None");
@@ -305,7 +301,7 @@ public class SpeechActivity extends AppCompatActivity{
         String username = sharedPreferences.getString("username","");
 
         String title = noteTitle.getText().toString();
-        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+        DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
         String date = dateFormat.format(new Date());
 
         dbHelper.saveNotes(username, title, recording, date, docId);

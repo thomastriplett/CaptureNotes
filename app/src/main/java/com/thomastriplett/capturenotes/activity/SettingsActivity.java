@@ -14,7 +14,6 @@ import android.view.ContextMenu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,8 +30,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.docs.v1.DocsScopes;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
@@ -43,6 +40,7 @@ import com.thomastriplett.capturenotes.google.docs.DeleteGoogleDoc;
 import com.thomastriplett.capturenotes.google.services.DriveService;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -66,20 +64,16 @@ public class SettingsActivity extends AppCompatActivity {
     Button signOutButton;
     Button saveLocationButton;
     Button deleteNotesButton;
-
-    /** Application name. */
-    private static final String APPLICATION_NAME = "CaptureNotes";
-    /** Global instance of the JSON factory. */
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private Drive driveService;
     Executor executor = Executors.newSingleThreadExecutor();
     DeleteGoogleDoc deleteGoogleDoc = new DeleteGoogleDoc();
 
     @Override
+    @SuppressWarnings("unchecked")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        getSupportActionBar().setIcon(R.drawable.notes);
+        Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         googleAccountDescription = findViewById(R.id.googleAccountDescription);
         saveLocationDescription = findViewById(R.id.saveLocationDescription);
@@ -132,18 +126,18 @@ public class SettingsActivity extends AppCompatActivity {
         Log.i(TAG, googleDocNoteCount+" Google Doc Notes");
         Log.i(TAG, localNoteCount+" Local Notes");
 
-        if(googleDocNoteCount == 1 && localNoteCount == 1){
-            notesCreatedDescription.setText(googleDocNoteCount+" note in Google Docs\n"+localNoteCount+" note in app only");
+        StringBuilder notesCreatedText = new StringBuilder();
+        if (googleDocNoteCount == 1) {
+            notesCreatedText.append(googleDocNoteCount).append(" note in Google Docs\n");
+        } else {
+            notesCreatedText.append(googleDocNoteCount).append(" notes in Google Docs\n");
         }
-        else if(googleDocNoteCount == 1) {
-            notesCreatedDescription.setText(googleDocNoteCount+" note in Google Docs\n"+localNoteCount+" notes in app only");
+        if (localNoteCount == 1) {
+            notesCreatedText.append(localNoteCount).append(" note in app only");
+        } else {
+            notesCreatedText.append(localNoteCount).append(" notes in app only");
         }
-        else if(localNoteCount == 1) {
-            notesCreatedDescription.setText(googleDocNoteCount+" notes in Google Docs\n"+localNoteCount+" note in app only");
-        }
-        else {
-            notesCreatedDescription.setText(googleDocNoteCount+" notes in Google Docs\n"+localNoteCount+" notes in app only");
-        }
+        notesCreatedDescription.setText(notesCreatedText.toString());
 
         signOutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -193,7 +187,7 @@ public class SettingsActivity extends AppCompatActivity {
         privacyPolicyHeader.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                goToPrivacyPolicy(v);
+                goToPrivacyPolicy();
             }
         });
 
@@ -212,23 +206,21 @@ public class SettingsActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         SharedPreferences.Editor sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
-        switch(item.getItemId()) {
-            case R.id.saveInGoogleDocsItem:
-                sharedPreferences.putString("saveLocation", "googleDocs");
-                sharedPreferences.apply();
-                Log.d(TAG,"Save Location Changed to Google Docs");
-                saveLocationDescription.setText(R.string.save_location_google_docs);
-                return true;
-            case R.id.saveOnlyInAppItem:
-                sharedPreferences.putString("saveLocation", "appOnly");
-                sharedPreferences.apply();
-                Log.d(TAG,"Save Location Changed to App Only");
-                saveLocationDescription.setText(R.string.save_location_app_only);
-                return true;
-            default:
-                return super.onContextItemSelected(item);
+        if (item.getItemId() == R.id.saveInGoogleDocsItem) {
+            sharedPreferences.putString("saveLocation", "googleDocs");
+            sharedPreferences.apply();
+            Log.d(TAG,"Save Location Changed to Google Docs");
+            saveLocationDescription.setText(R.string.save_location_google_docs);
+            return true;
+        } else if (item.getItemId() == R.id.saveOnlyInAppItem) {
+            sharedPreferences.putString("saveLocation", "appOnly");
+            sharedPreferences.apply();
+            Log.d(TAG,"Save Location Changed to App Only");
+            saveLocationDescription.setText(R.string.save_location_app_only);
+            return true;
+        } else {
+            return super.onContextItemSelected(item);
         }
     }
 
@@ -262,7 +254,8 @@ public class SettingsActivity extends AppCompatActivity {
         dbHelper = new DBHelper(sqLiteDatabase);
         dbHelper.deleteNotes(username);
 
-        notesCreatedDescription.setText("0 notes");
+        String zeroNotesText = "0 notes";
+        notesCreatedDescription.setText(zeroNotesText);
 
         SharedPreferences.Editor sharedPreferencesEditor = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE).edit();
         sharedPreferencesEditor.putInt("noteCount",0);
@@ -304,13 +297,13 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
-    private void goToUrl (String url) {
-        Uri uriUrl = Uri.parse(url);
+    private void goToUrl () {
+        Uri uriUrl = Uri.parse("https://github.com/thomastriplett/CaptureNotes/blob/master/PRIVACY_POLICY.md");
         Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
         startActivity(launchBrowser);
     }
 
-    private void goToPrivacyPolicy(View v) {
-        goToUrl("https://github.com/thomastriplett/CaptureNotes/blob/master/PRIVACY_POLICY.md");
+    private void goToPrivacyPolicy() {
+        goToUrl();
     }
 }

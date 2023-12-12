@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -51,10 +52,12 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes);
+        ViewGroup notesLayout = findViewById(R.id.notesLayout);
         Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setDisplayOptions(getSupportActionBar().DISPLAY_SHOW_CUSTOM);
-        View cView = getLayoutInflater().inflate(R.layout.activity_notes_action_bar, null);
+        getSupportActionBar();
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        View cView = getLayoutInflater().inflate(R.layout.activity_notes_action_bar, notesLayout, false);
         getSupportActionBar().setCustomView(cView);
 
         SharedPreferences sharedPreferences = getSharedPreferences("c.triplett.capturenotes", Context.MODE_PRIVATE);
@@ -170,7 +173,7 @@ public class NotesActivity extends AppCompatActivity implements View.OnClickList
         dbHelper.deleteNote(username,n.getTitle());
         Log.d(TAG,"Removing "+i+" item from adapter");
         Toast.makeText(NotesActivity.this, "Note deleted", Toast.LENGTH_SHORT).show();
-        adapter.notifyDataSetChanged();
+        adapter.notifyItemRemoved(i);
     }
 
     private void uploadNoteToGoogleDocs(){

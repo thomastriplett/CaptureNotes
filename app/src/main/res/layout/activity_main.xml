@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainActivityLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.MainActivity">
@@ -46,8 +47,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.785"
-        app:layout_constraintGuide_begin="580dp" />
+        app:layout_constraintGuide_begin="580dp"
+        app:layout_constraintGuide_percent="0.785" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/mainActivityBottomGuideline"
@@ -61,6 +62,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/cameraColor"
+        android:contentDescription="@string/image_button_description"
         app:layout_constraintBottom_toTopOf="@+id/mainActivityTopThirdGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -73,6 +75,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/saveColor"
+        android:contentDescription="@string/audio_button_description"
         app:layout_constraintBottom_toTopOf="@+id/mainActivityBottomThirdGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -85,6 +88,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:background="@color/micColor"
+        android:contentDescription="@string/notes_button_description"
         app:layout_constraintBottom_toTopOf="@+id/mainActivityBottomGuideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

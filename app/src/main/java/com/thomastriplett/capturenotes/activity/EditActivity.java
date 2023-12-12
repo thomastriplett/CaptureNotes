@@ -10,6 +10,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,12 +43,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class EditActivity extends AppCompatActivity {
 
-    int noteid = -1;
+    int noteId = -1;
     DBHelper dbHelper;
     SQLiteDatabase sqLiteDatabase;
     String originalTitle;
@@ -57,7 +59,6 @@ public class EditActivity extends AppCompatActivity {
     private static final String TAG = "EditActivity";
     private Docs docsService;
     private Drive driveService;
-    private ImageButton syncButton;
 
     Executor executor = Executors.newSingleThreadExecutor();
     GetGoogleDoc getGoogleDoc = new GetGoogleDoc();
@@ -68,14 +69,16 @@ public class EditActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
-        getSupportActionBar().setIcon(R.drawable.notes);
+        ViewGroup editActivityLayout = findViewById(R.id.editActivityLayout);
+        Objects.requireNonNull(getSupportActionBar()).setIcon(R.drawable.notes);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        getSupportActionBar().setDisplayOptions(getSupportActionBar().DISPLAY_SHOW_CUSTOM);
-        View cView = getLayoutInflater().inflate(R.layout.activity_edit_action_bar, null);
+        getSupportActionBar();
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        View cView = getLayoutInflater().inflate(R.layout.activity_edit_action_bar, editActivityLayout, false);
         getSupportActionBar().setCustomView(cView);
 
-        editText = (TextView) findViewById(R.id.editText);
-        editTitle = (TextView) findViewById(R.id.editTitle);
+        editText = findViewById(R.id.editText);
+        editTitle = findViewById(R.id.editTitle);
 
         findViewById(R.id.edit_save_button)
                 .setOnClickListener(
@@ -85,24 +88,23 @@ public class EditActivity extends AppCompatActivity {
                         });
 
         Intent intent = getIntent();
-        noteid = intent.getIntExtra("noteid",-1);
+        noteId = intent.getIntExtra("noteid",-1);
 
-        Log.i("Info","noteid = "+noteid);
+        Log.i("Info","noteid = "+ noteId);
 
-        if(noteid != -1) {
-            Note note = NotesActivity.notes.get(noteid);
+        if(noteId != -1) {
+            Note note = NotesActivity.notes.get(noteId);
             editText.setText(note.getContent());
             editTitle.setText(note.getTitle());
             originalTitle = note.getTitle();
             docId = note.getDocId();
         } else {
-            Log.e(TAG, "Note ID was not sent by NotesActivity");
-            showToast("Something went wrong");
+            Log.i(TAG, "Note ID was not sent by NotesActivity... creating new note");
         }
 
 
         ActionBar actionBar = getSupportActionBar();
-        syncButton = actionBar.getCustomView().findViewById(R.id.sync_button);
+        ImageButton syncButton = actionBar.getCustomView().findViewById(R.id.sync_button);
 
         docsService = DocsService.build();
         driveService = DriveService.build();
@@ -159,7 +161,7 @@ public class EditActivity extends AppCompatActivity {
                     BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(requests);
                     updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
                         // Handle the result on the main thread
-                        if (result == null) {
+                        if (updateGoogleDocResult == null) {
                             Log.e(TAG, "Error Adding Text to Google Doc");
                             runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                         }
@@ -219,7 +221,7 @@ public class EditActivity extends AppCompatActivity {
         if(editTitle.getText().toString().equals(originalTitle)) {
             updateGoogleDoc.execute(docsService, docId, body, executor, updateGoogleDocResult -> {
                 // Handle the result on the main thread
-                if (result == null) {
+                if (updateGoogleDocResult == null) {
                     Log.e(TAG, "Error Adding Text to Google Doc");
                     runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                 }
@@ -234,7 +236,7 @@ public class EditActivity extends AppCompatActivity {
             file.set("name",editTitle.getText().toString());
             updateGoogleDoc.execute(docsService, docId, body, driveService, file, executor, updateGoogleDocResult -> {
                 // Handle the result on the main thread
-                if (result == null) {
+                if (updateGoogleDocResult == null) {
                     Log.e(TAG, "Error Adding Text to Google Doc");
                     runOnUiThread(() -> Toast.makeText(EditActivity.this, "Note Not Saved, Error Adding Text to Google Doc", Toast.LENGTH_SHORT).show());
                 }
@@ -280,7 +282,7 @@ public class EditActivity extends AppCompatActivity {
         DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy h:mm a", Locale.US);
         String date = dateFormat.format(new Date());
 
-        if (noteid == -1) {
+        if (noteId == -1) {
             dbHelper.saveNotes(username, title, content, date, docId);
         } else {
             dbHelper.updateNote(username, date, title, content, docId, originalTitle);
